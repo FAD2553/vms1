@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}{{ visiteur.prenom }} {{ visiteur.nom }} | VMS{% endblock %}
+{% block page_title %}Détails du Visiteur{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Quick Stats for Visitor -->
+    <div class="col-md-3">
+        <div class="stat-card p-3 d-flex align-items-center gap-3">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div>
+                <div class="stat-label">Total Visites</div>
+                <div class="stat-value fs-4">{{ total_visites }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card p-3 d-flex align-items-center gap-3">
+            <div class="stat-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <div>
+                <div class="stat-label">Top Service</div>
+                <div class="stat-value fs-5">{{ top_service }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card p-3 d-flex align-items-center gap-3">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <div>
+                <div class="stat-label">Dernier passage</div>
+                <div class="stat-value small fw-bold">{{ derniere_visite.date_visite|date:"d/m/Y"|default:"---" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card p-3 d-flex align-items-center gap-3 {% if actuellement_present %}border-start border-4 border-success{% endif %}">
+            <div class="stat-icon {% if actuellement_present %}bg-success{% else %}bg-secondary{% endif %} bg-opacity-10 {% if actuellement_present %}text-success{% else %}text-secondary{% endif %}">
+                <i class="bi bi-geo-alt-fill"></i>
+            </div>
+            <div>
+                <div class="stat-label">Statut Actuel</div>
+                <div class="stat-value small fw-bold">
+                    {% if actuellement_present %}
+                        <span class="text-success text-uppercase">Sur place</span>
+                    {% else %}
+                        <span class="text-secondary text-uppercase">Sorti</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <!-- Identity Section -->
+        <div class="card border-0 shadow-sm overflow-hidden mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-person-badge me-2 text-primary"></i> Identité & Contact</h6>
+                <div class="d-flex gap-2">
+                    {% if user.is_superuser %}
+                    <a href="{% url 'visiteur_edit' visiteur.pk %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-xs">
+                        <i class="bi bi-pencil me-1"></i> Modifier
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="text-center py-4 bg-light bg-opacity-10 border-bottom">
+                    <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 80px; height: 80px; font-size: 2rem; font-weight: 800;">
+                        {{ visiteur.nom|slice:":1" }}{{ visiteur.prenom|slice:":1" }}
+                    </div>
+                    <h5 class="mb-1 fw-bold">{{ visiteur.prenom }} {{ visiteur.nom }}</h5>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill">
+                        {{ visiteur.numero_cni }}
+                    </span>
+                </div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="text-muted small text-uppercase fw-bold mb-1">Téléphone</label>
+                            <p class="mb-0 fw-medium text-dark">{{ visiteur.telephone|default:"---" }}</p>
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small text-uppercase fw-bold mb-1">Sexe</label>
+                            <p class="mb-0 fw-medium text-dark">{{ visiteur.get_sexe_display|default:"---" }}</p>
+                        </div>
+                        <div class="col-12 border-top pt-3 mt-2">
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>Enregistré le : <strong>{{ visiteur.date_enregistrement|date:"d/m/Y H:i" }}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Chart Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-pie-chart me-2 text-primary"></i> Fréquentation par Service</h6>
+            </div>
+            <div class="card-body">
+                <div style="height: 250px;">
+                    <canvas id="visitorServiceChart"></canvas>
+                </div>
+                {% if total_visites == 0 %}
+                <div class="text-center py-4 text-muted small italic">Aucune donnée à visualiser</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <!-- CNI Scans (Simplified) -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white fw-bold text-uppercase small text-muted py-3 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-card-image me-2 text-primary"></i> Pièces d'identité (Scan CNIB)</span>
+            </div>
+            <div class="card-body">
+                {% if user.is_superuser %}
+                <div class="row g-3 text-center">
+                    <div class="col-6">
+                        <div class="position-relative shadow-xs rounded border overflow-hidden bg-light" style="height: 120px;">
+                            <img src="{% url 'visiteur_cnib_view' visiteur.pk 'recto' %}" class="img-fluid h-100 w-100 object-fit-cover" alt="CNIB Recto" onerror="this.src='https://placehold.co/400x250?text=Recto'">
+                        </div>
+                        <small class="text-muted mt-2 d-block">Recto</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="position-relative shadow-xs rounded border overflow-hidden bg-light" style="height: 120px;">
+                            <img src="{% url 'visiteur_cnib_view' visiteur.pk 'verso' %}" class="img-fluid h-100 w-100 object-fit-cover" alt="CNIB Verso" onerror="this.src='https://placehold.co/400x250?text=Verso'">
+                        </div>
+                        <small class="text-muted mt-2 d-block">Verso</small>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4 bg-light bg-opacity-50 rounded-3 border border-dashed">
+                    <i class="bi bi-shield-lock-fill text-muted flex d-block mb-3 fs-3"></i>
+                    <h6 class="fw-bold text-dark mb-1">Accès Restreint</h6>
+                    <small class="text-muted px-3 d-block">Seul l'administrateur peut consulter les documents d'identité originaux.</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Visit History -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-clock-history me-2 text-primary"></i> Historique ({{ total_visites }})</h6>
+                {% if not actuellement_present %}
+                <a href="{% url 'visite_create' %}?visiteur_id={{ visiteur.id }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                    <i class="bi bi-plus-lg me-1"></i> Nouvelle Visite
+                </a>
+                {% else %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill small fw-bold">
+                    <i class="bi bi-check-circle-fill me-1"></i> PRÉSENT ACTUELLEMENT
+                </span>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr class="text-uppercase small fw-bold text-muted border-0">
+                                <th class="ps-4">Service</th>
+                                <th>Entrée</th>
+                                <th>Sortie</th>
+                                <th class="pe-4 text-end">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            {% for v in visites %}
+                            <tr class="cursor-pointer" onclick="window.location='{% url 'visite_detail' v.pk %}'">
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">{{ v.service_visite.nom }}</div>
+                                    <small class="text-muted">{{ v.motif|truncatewords:4 }}</small>
+                                </td>
+                                <td>
+                                    <div class="fw-medium text-primary">{{ v.heure_entree|date:"H:i" }}</div>
+                                    <small class="text-muted">{{ v.heure_entree|date:"d/m/y" }}</small>
+                                </td>
+                                <td>
+                                    {% if v.heure_sortie %}
+                                        <div class="fw-medium text-dark">{{ v.heure_sortie|date:"H:i" }}</div>
+                                        <small class="text-muted">{{ v.heure_sortie|date:"d/m/y" }}</small>
+                                    {% else %}
+                                        <span class="text-muted small italic">En cours</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-4 text-end">
+                                    {% if v.heure_sortie %}
+                                        <span class="badge bg-light text-dark border-0 fw-medium">Terminé</span>
+                                    {% else %}
+                                        <span class="badge bg-success shadow-xs fw-bold">Sur place</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-5">Aucun passage.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('visitorServiceChart').getContext('2d');
+        const labels = {{ chart_labels|safe }};
+        const data = {{ chart_data|safe }};
+        
+        if (labels.length > 0) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#2563EB', '#1F2937', '#3B82F6', '#6B7280', '#1D4ED8', '#DBEAFE'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 11 } } }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

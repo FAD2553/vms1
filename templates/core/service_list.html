@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Services | VMS{% endblock %}
+{% block page_title %}Gestion des Services{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm sticky-top" style="top: 100px;">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-plus-circle me-2 text-primary"></i> Ajouter un Service</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'service_create' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Nom du service <span class="text-danger">*</span></label>
+                        <input type="text" name="nom" class="form-control py-2" placeholder="Ex: Ressources Humaines" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Description optionnelle..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm">
+                        <i class="bi bi-save me-2"></i> Créer le Service
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-building me-2 text-primary"></i> Liste des Services ({{ services|length }})</h6>
+                <div class="search-box" style="width: 250px;">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" id="serviceSearch" class="form-control bg-light border-start-0" placeholder="Rechercher un service...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr class="text-uppercase small fw-bold text-muted border-0">
+                                <th class="ps-4">Symbole</th>
+                                <th>Nom du Service</th>
+                                <th>Description</th>
+                                <th class="pe-4 text-end">Visites enregistrées</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            {% for s in services %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="icon-shape bg-primary bg-opacity-10 text-primary rounded-circle small d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: bold;">
+                                        {{ s.nom|slice:":1" }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ s.nom }}</div>
+                                    <a href="{% url 'service_detail' s.pk %}" class="extra-small text-primary fw-bold text-uppercase mt-1 text-decoration-none"><i class="bi bi-bar-chart-fill me-1"></i> Statistiques</a>
+                                </td>
+                                <td><span class="text-muted small truncate-text" style="max-width: 250px;">{{ s.description|default:"---" }}</span></td>
+                                <td class="pe-4 text-end">
+                                    <div class="d-flex align-items-center justify-content-end gap-2">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-light border rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-2">
+                                                <li><a class="dropdown-item py-2" href="{% url 'service_detail' s.pk %}"><i class="bi bi-bar-chart-fill me-2 text-primary"></i> Voir Statistiques</a></li>
+                                                <li><a class="dropdown-item py-2" href="{% url 'service_edit' s.pk %}"><i class="bi bi-pencil me-2 text-warning"></i> Modifier</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item py-2 text-danger" href="{% url 'service_archive' s.pk %}"><i class="bi bi-archive me-2"></i> Archiver</a></li>
+                                            </ul>
+                                        </div>
+                                        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-bold">{{ s.nb_visites }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-5 text-muted">Aucun service créé.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('serviceSearch');
+        if (!searchInput) return;
+
+        const tableBody = document.querySelector('table tbody');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const rows = tableBody.querySelectorAll('tr:not(.no-results-row)');
+            let hasResults = false;
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                    hasResults = true;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Gérer l'affichage "Aucun résultat"
+            let noResultsRow = tableBody.querySelector('.no-results-row');
+            if (!hasResults && searchTerm !== "") {
+                if (!noResultsRow) {
+                    noResultsRow = document.createElement('tr');
+                    noResultsRow.className = 'no-results-row';
+                    noResultsRow.innerHTML = `<td colspan="4" class="text-center py-4 text-muted small italic border-0">Aucun service ne correspond à "${searchTerm}"</td>`;
+                    tableBody.appendChild(noResultsRow);
+                } else {
+                    noResultsRow.querySelector('td').textContent = `Aucun service ne correspond à "${searchTerm}"`;
+                }
+            } else if (noResultsRow) {
+                noResultsRow.remove();
+            }
+        });
+    });
+</script>
+{% endblock %}

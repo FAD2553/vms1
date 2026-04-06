@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Visites | UWAZY{% endblock %}
+{% block page_title %}Journal des Visites{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <form class="row g-3 align-items-center" method="get">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control border-start-0" placeholder="Visiteur ou motif..." value="{{ query }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="service" class="form-select select2" onchange="this.form.submit()" data-placeholder="Filtrer par service">
+                    <option value="">Tous les services</option>
+                    {% for s in all_services %}
+                    <option value="{{ s.id }}" {% if service_filter == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if user.is_superuser %}
+            <div class="col-md-2">
+                <select name="porte" class="form-select select2" onchange="this.form.submit()" data-placeholder="Filtrer par porte">
+                    <option value="">Toutes les portes</option>
+                    {% for p in all_portes %}
+                    <option value="{{ p.id }}" {% if porte_filter == p.id|stringformat:"s" %}selected{% endif %}>Porte {{ p.numero }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="col-md-2">
+                <select name="statut" class="form-select select2" onchange="this.form.submit()" data-placeholder="Filtrer par statut">
+                    <option value="">Tous les statuts</option>
+                    <option value="PRESENT" {% if statut_filter == 'PRESENT' %}selected{% endif %}>En cours (Présents)</option>
+                    <option value="SORTI" {% if statut_filter == 'SORTI' %}selected{% endif %}>Terminées (Sortis)</option>
+                </select>
+            </div>
+            <div class="col-md text-md-end">
+                <a href="{% url 'visite_create' %}" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 rounded-pill px-3 fw-bold">
+                    <i class="bi bi-plus-lg"></i> NOUVELLE ENTRÉE
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr class="text-uppercase small fw-bold text-muted border-0">
+                    <th class="ps-4">Visiteur</th>
+                    {% if user.is_superuser %}<th>Porte</th>{% endif %}
+                    <th>Destination</th>
+                    <th>Agents (E/S)</th>
+                    <th class="text-center">Entrée</th>
+                    <th class="text-center">Sortie</th>
+                    <th class="pe-4 text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% for v in visites %}
+                <tr {% if v.statut == 'PRESENT' %}{% if v.est_trop_longue %}class="table-danger border-start border-4 border-danger"{% else %}class="bg-success-subtle bg-opacity-10"{% endif %}{% endif %}>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-xs bg-dark text-white rounded-circle d-flex align-items-center justify-content-center shadow-xs" style="width: 38px; height: 38px; font-size: 0.8rem; font-weight: 800;">
+                                {{ v.visiteur.nom|slice:":1" }}{{ v.visiteur.prenom|slice:":1" }}
+                            </div>
+                            <div>
+                                <a href="{% url 'visiteur_detail' v.visiteur.pk %}" class="fw-bold text-dark text-decoration-none hover-primary">{{ v.visiteur.prenom }} {{ v.visiteur.nom }}</a>
+                                <div class="text-muted extra-small">ID: {{ v.visiteur.numero_cni }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    {% if user.is_superuser %}
+                    <td>
+                        <span class="badge bg-primary px-3 rounded-pill">P{{ v.porte.numero }}</span>
+                    </td>
+                    {% endif %}
+                    <td>
+                        <div class="fw-bold small">{{ v.service_visite.nom }}</div>
+                        <div class="text-muted text-truncate italic small" style="max-width: 150px;">{{ v.motif }}</div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column gap-1">
+                            <span class="badge bg-light text-dark border fw-normal extra-small" title="Entrée par"><i class="bi bi-box-arrow-in-right text-primary me-1"></i>{{ v.agent_entree.username|default:"---" }}</span>
+                            {% if v.agent_sortie %}
+                            <span class="badge bg-light text-dark border fw-normal extra-small" title="Sortie par"><i class="bi bi-box-arrow-right text-dark me-1"></i>{{ v.agent_sortie.username }}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="fw-bold text-dark">{{ v.heure_entree|date:"H:i" }}</div>
+                        <div class="text-muted extra-small">{{ v.heure_entree|date:"d/m" }}</div>
+                    </td>
+                    <td class="text-center">
+                        {% if v.heure_sortie %}
+                            <div class="fw-bold text-dark">{{ v.heure_sortie|date:"H:i" }}</div>
+                            <div class="text-muted extra-small">{{ v.heure_sortie|date:"d/m" }}</div>
+                        {% else %}
+                            <span class="text-success blink extra-small fw-extrabold"><i class="bi bi-dot"></i> SUR PLACE</span>
+                            {% if v.est_trop_longue %}
+                                <i class="bi bi-exclamation-triangle-fill text-danger ms-1" title="Alerte +5h"></i>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-end">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'visite_detail' v.pk %}" class="btn btn-sm btn-outline-primary rounded-circle shadow-xs p-0 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if v.statut == 'PRESENT' %}
+                            <a href="{% url 'visite_sortie' v.pk %}" class="btn btn-sm btn-success rounded-pill px-3 shadow-xs fw-bold">
+                                Sortie
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="py-4">
+                            <i class="bi bi-calendar4-week text-muted display-4 opacity-25"></i>
+                            <p class="mt-3 text-muted fw-bold">Aucune trace de visite pour cette recherche.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .fw-extrabold { font-weight: 800; }
+    .extra-small { font-size: 0.72rem; }
+    .hover-primary:hover { color: var(--primary-color) !important; }
+    .blink { animation: blinker 1.5s linear infinite; }
+    @keyframes blinker { 50% { opacity: 0.5; } }
+    .shadow-xs { box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .badge { font-size: 0.65rem; }
+</style>
+{% endblock %}

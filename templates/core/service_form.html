@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | UWAZY{% endblock %}
+{% block page_title %}Gestion des Services{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-lg-7 col-xl-6">
+        <div class="card border-0 shadow-lg overflow-hidden rounded-4">
+            <!-- Dynamic Header with vibrant gradient -->
+            <div class="card-header bg-dark text-white py-4 px-4 border-0 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #2c3e50 0%, #000000 100%) !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary p-2 rounded-3 shadow-sm">
+                        <i class="bi bi-building-fill text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-extrabold text-uppercase letter-spacing-1">{{ title }}</h5>
+                        <small class="text-white-50 fw-bold">Configuration du département</small>
+                    </div>
+                </div>
+                {% if edit %}
+                    <span class="badge rounded-pill bg-primary px-3 shadow-xs small">ID: {{ form.instance.id }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="card-body p-4 p-md-5">
+                <form method="post" class="row g-4">
+                    {% csrf_token %}
+                    
+                    <div class="col-12 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Nom du service / Département <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-3"><i class="bi bi-tag-fill text-primary"></i></span>
+                            {{ form.nom }}
+                        </div>
+                        {% if form.nom.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.nom.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-12 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Description & Mission</label>
+                        {{ form.description }}
+                        <div class="form-text extra-small italic text-muted-custom mt-2"><i class="bi bi-info-circle me-1"></i> Précisez ici le rôle de ce service au sein de l'établissement.</div>
+                        {% if form.description.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.description.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="col-12">
+                        <div class="alert alert-danger rounded-3 py-2 px-3 small border-0 shadow-sm mb-0 fw-bold">
+                            {% for error in form.non_field_errors %}<i class="bi bi-exclamation-octagon-fill me-2"></i> {{ error }}{% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="col-12 mt-5 pt-3 border-top d-flex flex-wrap gap-3">
+                        <button type="submit" class="btn btn-primary px-5 py-3 rounded-3 shadow-lg fw-extrabold flex-grow-1">
+                            <i class="bi bi-check-circle-fill me-2"></i> {% if edit %}METTRE À JOUR LE SERVICE{% else %}CRÉER LE NOUVEAU SERVICE{% endif %}
+                        </button>
+                        <a href="{% url 'service_list' %}" class="btn btn-light px-4 py-3 rounded-3 border fw-bold text-muted-custom">
+                            ANNULER
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="bg-light p-3 text-center border-top">
+                <small class="text-muted-custom fw-bold"><i class="bi bi-shield-lock-fill me-1 text-dark"></i> Sécurité administrative UWAZY VMS</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.fw-extrabold { font-weight: 800; }
+.letter-spacing-1 { letter-spacing: 1.2px; }
+.shadow-xs { box-shadow: 0 2px 5px rgba(0,0,0,0.04); }
+.extra-small { font-size: 0.75rem; }
+.italic { font-style: italic; }
+.input-group-text { border-color: #dee2e6; }
+</style>
+{% endblock %}

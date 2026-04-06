@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle Visite | UWAZY{% endblock %}
+{% block page_title %}Enregistrement d'une Visite{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-lg-9 col-xl-8">
+        <div class="card border-0 shadow-lg overflow-hidden rounded-4">
+            <div class="card-header bg-dark text-white py-4 px-4 border-0 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #1a1d23 0%, #000000 100%) !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary p-2 rounded-3 shadow-sm">
+                        <i class="bi bi-box-arrow-in-right text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-extrabold text-uppercase letter-spacing-1">Nouvelle Entrée</h5>
+                        <small class="text-white-50 fw-bold">Remplissez les détails du passage</small>
+                    </div>
+                </div>
+                {% if visiteur %}
+                    <span class="badge rounded-pill bg-success px-4 py-2 shadow-sm small fw-bold">ÉTAPE 2/2</span>
+                {% else %}
+                    <span class="badge rounded-pill bg-primary px-4 py-2 shadow-sm small fw-bold opacity-75">SAISIE DIRECTE</span>
+                {% endif %}
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                {% if visiteur %}
+                <!-- Visiteur Spotlight -->
+                <div class="card bg-primary bg-opacity-10 border-0 mb-5 rounded-4 shadow-sm overflow-hidden">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+                        <div class="avatar-lg bg-white text-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm fw-extrabold fs-3" style="width: 70px; height: 70px; min-width: 70px;">
+                            {{ visiteur.nom|slice:":1" }}{{ visiteur.prenom|slice:":1" }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h4 class="fw-extrabold mb-1 text-primary-emphasis text-uppercase">{{ visiteur.prenom }} {{ visiteur.nom }}</h4>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span class="badge bg-white text-dark border px-3 py-2 rounded-pill fw-bold small shadow-xs"><i class="bi bi-card-text me-2 text-primary"></i>ID: {{ visiteur.numero_cni }}</span>
+                                <span class="badge bg-white text-dark border px-3 py-2 rounded-pill fw-bold small shadow-xs"><i class="bi bi-briefcase me-2 text-primary"></i>{{ visiteur.profession|default:"Non spécifiée" }}</span>
+                            </div>
+                        </div>
+                        <a href="{% url 'visiteur_edit' visiteur.pk %}" class="btn btn-sm btn-outline-primary px-3 rounded-pill fw-bold">
+                            <i class="bi bi-pencil me-1"></i> Modifier
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <form method="post" class="row g-4">
+                    {% csrf_token %}
+                    
+                    {% if visiteur %}
+                        {{ form.visiteur.as_hidden }}
+                    {% else %}
+                    <div class="col-12 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-3 d-block letter-spacing-1">Sélectionner le Visiteur <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-4"><i class="bi bi-person-search text-primary"></i></span>
+                            {{ form.visiteur }}
+                        </div>
+                        <div class="form-text small mt-3 italic"><i class="bi bi-info-circle-fill me-1"></i> Introuvable ? <a href="{% url 'visiteur_create' %}" class="fw-extrabold text-primary text-decoration-none">Ajoutez-le d'abord ici</a></div>
+                        {% if form.visiteur.errors %}<div class="text-danger extra-small mt-2 fw-bold">{{ form.visiteur.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if user.is_superuser %}
+                    <div class="col-12 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Affectation Porte (Admin) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-3"><i class="bi bi-door-open-fill text-dark"></i></span>
+                            {{ form.porte }}
+                        </div>
+                        <div class="form-text extra-small italic text-muted-custom mt-2"><i class="bi bi-shield-lock me-1"></i> En tant qu'administrateur, vous devez préciser la porte où se trouve le visiteur.</div>
+                        {% if form.porte.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.porte.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% else %}
+                    <div class="col-12 mb-2">
+                        <div class="p-3 bg-light rounded-3 border d-flex align-items-center gap-3">
+                            <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted text-uppercase fw-bold d-block" style="font-size: 0.65rem;">Votre Poste de Contrôle</small>
+                                <span class="fw-extrabold text-dark">PORTE {{ user.profile.porte_actuelle.numero }}</span>
+                            </div>
+                        </div>
+                        {{ form.porte.as_hidden }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Destination / Service <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-3"><i class="bi bi-building text-primary"></i></span>
+                            {{ form.service_visite }}
+                        </div>
+                        {% if form.service_visite.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.service_visite.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Heure du passage <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-3"><i class="bi bi-clock-history text-primary"></i></span>
+                            {{ form.heure_entree }}
+                        </div>
+                        {% if form.heure_entree.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.heure_entree.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-12 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Motif précis du séjour <span class="text-danger">*</span></label>
+                        {{ form.motif }}
+                        {% if form.motif.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.motif.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Observations (Optionnel)</label>
+                        {{ form.observations }}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="col-12">
+                        <div class="alert alert-danger rounded-4 py-3 px-4 small border-0 shadow-sm mb-0 fw-bold">
+                            {% for error in form.non_field_errors %}<i class="bi bi-exclamation-octagon-fill me-2"></i> {{ error }}{% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="col-12 mt-5 pt-3 border-top d-flex flex-wrap gap-3">
+                        <button type="submit" class="btn btn-primary px-5 py-3 rounded-3 shadow-lg fw-extrabold flex-grow-1">
+                            <i class="bi bi-check-circle-fill me-2"></i> ENREGISTRER L'ENTRÉE
+                        </button>
+                        {% if visiteur %}
+                        <a href="{% url 'visiteur_list' %}" class="btn btn-light px-4 py-3 rounded-3 border fw-bold text-muted-custom">ANNULER</a>
+                        {% else %}
+                        <a href="{% url 'visite_list' %}" class="btn btn-light px-4 py-3 rounded-3 border fw-bold text-muted-custom">ANNULER</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+            
+            <div class="bg-light p-3 text-center border-top">
+                <small class="text-muted-custom fw-bold"><i class="bi bi-shield-check me-1 text-dark"></i> Sécurisation par UWAZY Visitor Management System</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.fw-extrabold { font-weight: 800; }
+.letter-spacing-1 { letter-spacing: 1px; }
+.shadow-xs { box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+.extra-small { font-size: 0.75rem; }
+.italic { font-style: italic; }
+.input-group-text { border-color: #dee2e6; }
+.avatar-lg { border: 2px solid #fff; }
+</style>
+{% endblock %}

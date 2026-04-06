@@ -1,0 +1,47 @@
+{% extends "core/pdf/base_pdf.html" %}
+{% block pdf_content %}
+<div style="font-family: sans-serif;">
+    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+        <h2 style="color: #000; margin: 0; text-transform: uppercase;">Journal d'Audit Système</h2>
+        <p style="margin: 5px 0; color: #666; font-size: 10pt;">
+            Filtre : {{ action_filter }}
+        </p>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
+        <thead>
+            <tr style="background-color: #000; color: #fff;">
+                <th style="padding: 6px; text-align: left; width: 15%;">Date & Heure</th>
+                <th style="padding: 6px; text-align: left; width: 20%;">Action</th>
+                <th style="padding: 6px; text-align: left; width: 50%;">Détails</th>
+                <th style="padding: 6px; text-align: right; width: 15%;">Utilisateur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 6px; border: 1px solid #eee;">{{ log.date_heure|date:"d/m/Y H:i:s" }}</td>
+                <td style="padding: 6px; border: 1px solid #eee;"><strong>{{ log.action }}</strong></td>
+                <td style="padding: 6px; border: 1px solid #eee; font-size: 7.5pt;">{{ log.details }}</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid #eee;">{{ log.admin.username|default:"Système" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="padding: 30px; text-align: center; color: #999;">Aucun log disponible.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee;">
+        <div style="float: left; width: 40%;">
+            <p style="font-size: 8pt; margin: 2px 0;">Total actions : <strong>{{ logs|length }}</strong></p>
+            <p style="font-size: 8pt; margin: 2px 0;">Date d'édition : {% now "d/m/Y H:i" %}</p>
+        </div>
+        <div style="float: right; width: 40%; text-align: right;">
+            <p style="font-size: 8pt; font-style: italic;">Document d'audit confidentiel - UWAZY VMS</p>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+</div>
+{% endblock %}

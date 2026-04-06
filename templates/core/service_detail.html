@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Service : {{ service.nom }} | VMS{% endblock %}
+{% block page_title %}Détails du Service{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Stat Cards -->
+    <div class="col-md-3">
+        <div class="stat-card p-3 d-flex align-items-center gap-3">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-calendar-event"></i>
+            </div>
+            <div>
+                <div class="stat-label">Aujourd'hui</div>
+                <div class="stat-value fs-4">{{ visites_aujourdhui }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card p-3 d-flex align-items-center gap-3">
+            <div class="stat-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-calendar-range"></i>
+            </div>
+            <div>
+                <div class="stat-label">Cette semaine</div>
+                <div class="stat-value fs-4">{{ visites_semaine }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card p-3 d-flex align-items-center gap-3">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-calendar-month"></i>
+            </div>
+            <div>
+                <div class="stat-label">Ce mois</div>
+                <div class="stat-value fs-4">{{ visites_mois }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card p-3 d-flex align-items-center gap-3 border-start border-4 border-success">
+            <div class="stat-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-person-check-fill"></i>
+            </div>
+            <div>
+                <div class="stat-label">Présents actuellement</div>
+                <div class="stat-value fs-4">{{ visiteurs_presents }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <!-- Service Info Card -->
+        <div class="card border-0 shadow-sm overflow-hidden mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-info-circle me-2 text-primary"></i> Informations Service</h6>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'service_edit' service.pk %}" class="btn btn-sm btn-primary rounded-pill px-3 shadow-xs">
+                        <i class="bi bi-pencil me-1"></i> Modifier
+                    </a>
+                    <a href="{% url 'service_archive' service.pk %}" class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-xs">
+                        <i class="bi bi-archive me-1"></i> Archiver
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-4 text-center">
+                <div class="icon-shape bg-primary bg-opacity-10 text-primary rounded-circle mx-auto mb-3" style="width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold;">
+                    {{ service.nom|slice:":1" }}
+                </div>
+                <h4 class="fw-bold text-dark">{{ service.nom }}</h4>
+                <p class="text-muted small mb-4">{{ service.description|default:"Aucun descriptif pour ce service." }}</p>
+                
+                <div class="row border-top pt-4 mt-2 text-center">
+                    <div class="col-12">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-4 py-2 rounded-pill fw-bold">SERVICE ACTIF</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Card (Line Chart) -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-graph-up me-2 text-primary"></i> Évolution (7j)</h6>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 180px;">
+                    <canvas id="serviceEvolutionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- Visit History for this Service -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-clock-history me-2 text-primary"></i> Historique des passages ({{ visites|length }})</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr class="text-uppercase small fw-bold text-muted border-0">
+                                <th class="ps-4">Visiteur</th>
+                                <th>Entrée</th>
+                                <th>Sortie</th>
+                                <th class="text-center">Motif</th>
+                                <th class="pe-4 text-end">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            {% for v in visites %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-xs bg-light text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.7rem;">
+                                            {{ v.visiteur.nom|slice:":1" }}{{ v.visiteur.prenom|slice:":1" }}
+                                        </div>
+                                        <a href="{% url 'visiteur_detail' v.visiteur.pk %}" class="fw-bold text-dark text-decoration-none">{{ v.visiteur.prenom }} {{ v.visiteur.nom }}</a>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-medium text-primary">{{ v.heure_entree|date:"H:i" }}</div>
+                                    <small class="text-muted">{{ v.heure_entree|date:"d/m" }}</small>
+                                </td>
+                                <td>
+                                    {% if v.heure_sortie %}
+                                        <div class="fw-medium text-dark">{{ v.heure_sortie|date:"H:i" }}</div>
+                                        <small class="text-muted">{{ v.heure_sortie|date:"d/m" }}</small>
+                                    {% else %}
+                                        <span class="text-muted small">---</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-muted small truncate-text" style="max-width: 150px;" title="{{ v.motif }}">{{ v.motif }}</span>
+                                </td>
+                                <td class="pe-4 text-end">
+                                    {% if v.heure_sortie %}
+                                        <span class="badge bg-light text-dark border fw-normal">Sorti</span>
+                                    {% else %}
+                                        <span class="badge bg-success shadow-xs fw-bold">Présent</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center py-5 text-muted">Aucune visite pour ce service.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('serviceEvolutionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels|safe }},
+                datasets: [{
+                    label: 'Visites',
+                    data: {{ chart_data|safe }},
+                    borderColor: '#2563EB',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#2563EB'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { display: false } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+<style>
+    .extra-small { font-size: 0.65rem; }
+    .truncate-text { display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+{% endblock %}

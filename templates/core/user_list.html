@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Agents | UWAZY{% endblock %}
+{% block page_title %}Agents de Réception{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h4 class="fw-bold mb-0">Comptes Agents de Réception</h4>
+        <p class="text-muted small">Gérez les accès et les affectations aux portes.</p>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a href="{% url 'user_create' %}" class="btn btn-primary rounded-pill shadow-sm px-4">
+            <i class="bi bi-person-plus-fill me-2"></i> Nouvel Agent
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm overflow-hidden">
+    <!-- Filters & Stats row within card could go here, but keeping it clean for now -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr class="text-uppercase small fw-bold text-muted border-0">
+                    <th class="ps-4 py-3">Agent</th>
+                    <th>Porte Affectée</th>
+                    <th>Statut</th>
+                    <th>Dernière Connexion</th>
+                    <th class="pe-4 text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% for u in users %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-xs" style="width: 44px; height: 44px;">
+                                {{ u.username|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">{{ u.first_name }} {{ u.last_name }}</div>
+                                <div class="text-muted small">@{{ u.username }}{% if u.is_superuser %} <span class="badge bg-dark text-white tiny-badge">ADMIN</span>{% endif %}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if u.is_superuser %}
+                            <span class="text-muted small italic">Accès Global</span>
+                        {% else %}
+                            {% with p=u.profile.porte_actuelle %}
+                                {% if p %}
+                                    <a href="{% url 'porte_detail' p.pk %}" class="text-decoration-none">
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 fw-bold">
+                                            <i class="bi bi-door-open me-1"></i> Porte {{ p.numero }}
+                                        </span>
+                                    </a>
+                                {% else %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 fw-bold small">
+                                        <i class="bi bi-exclamation-circle me-1"></i> NON AFFECTÉ
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 shadow-xs">ACTIF</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-muted border border-secondary-subtle rounded-pill px-3 shadow-xs">INACTIF</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.last_login %}
+                            <div class="small fw-medium text-dark">{{ u.last_login|date:"d M Y" }}</div>
+                            <div class="text-muted tiny-text">{{ u.last_login|date:"H:i" }}</div>
+                        {% else %}
+                            <span class="text-muted small italic">Jamais connecté</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-end">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light border rounded-circle shadow-xs" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2">
+                                <li><a class="dropdown-item py-2" href="{% url 'user_edit' u.pk %}"><i class="bi bi-pencil me-2 text-primary"></i> Modifier le compte</a></li>
+                                {% if u != request.user and not u.is_superuser %}
+                                <li>
+                                    <form action="{% url 'user_password_reset' u.pk %}" method="POST" class="d-inline" onsubmit="return confirm('Réinitialiser le mot de passe de cet agent ?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item py-2 text-warning fw-bold"><i class="bi bi-key me-2"></i> Reset Mot de passe</button>
+                                    </form>
+                                </li>
+                                <li><hr class="dropdown-divider opacity-50"></li>
+                                <li>
+                                    <form action="{% url 'user_toggle_status' u.pk %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item py-2 fw-bold {% if u.is_active %}text-danger{% else %}text-success{% endif %}">
+                                            {% if u.is_active %}
+                                                <i class="bi bi-person-x me-2"></i> Désactiver
+                                            {% else %}
+                                                <i class="bi bi-person-check me-2"></i> Activer
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted fst-italic">Aucun agent configuré.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.tiny-badge { font-size: 0.55rem; padding: 2px 4px; vertical-align: middle; }
+.tiny-text { font-size: 0.7rem; }
+.badge { letter-spacing: 0.5px; }
+</style>
+{% endblock %}

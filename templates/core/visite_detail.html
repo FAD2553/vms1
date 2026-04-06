@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Détails de la Visite #{{ visite.id }} | UWAZY{% endblock %}
+{% block page_title %}Fiche de Visite{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+        <div class="card border-0 shadow-lg overflow-hidden mb-5 rounded-4">
+            <!-- Strategic Header with status badge -->
+            <div class="card-header bg-white py-4 px-4 border-bottom d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-4">
+                        <i class="bi bi-file-earmark-text-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-uppercase small text-muted-custom">Visite #{{ visite.id }}</h6>
+                        <h5 class="mb-0 fw-extrabold text-dark">Rapport d'activité</h5>
+                    </div>
+                </div>
+                {% if visite.statut == 'PRESENT' %}
+                    <span class="badge bg-success-subtle text-success shadow-sm px-4 py-2 rounded-pill fw-bold border border-success-subtle pulse-alert">
+                        <i class="bi bi-dot me-1"></i> VISITEUR PRÉSENT
+                    </span>
+                {% else %}
+                    <span class="badge bg-light text-muted px-4 py-2 rounded-pill fw-bold border shadow-xs">
+                        <i class="bi bi-check-circle-fill me-2 text-secondary"></i> VISITE TERMINÉE
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="card-body p-0">
+                <!-- Visiteur & Service Spotlight -->
+                <div class="p-4 p-md-5 bg-light bg-opacity-25 border-bottom">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 letter-spacing-1">Identité du Visiteur</label>
+                            <h3 class="fw-extrabold mb-1">
+                                <a href="{% url 'visiteur_detail' visite.visiteur.pk %}" class="text-dark text-decoration-none hover-primary transition-all">
+                                    {{ visite.visiteur.prenom }} {{ visite.visiteur.nom }}
+                                </a>
+                            </h3>
+                            <p class="text-muted-custom mb-0 fw-medium"><i class="bi bi-person-vcard me-2"></i> CNIB: {{ visite.visiteur.numero_cni }}</p>
+                        </div>
+                        <div class="col-md-5 text-md-end mt-4 mt-md-0">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 letter-spacing-1">Service Visité</label>
+                            <div class="fs-4 fw-extrabold text-primary">{{ visite.service_visite.nom }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Detailed Timeline & Agents -->
+                <div class="p-4 p-md-5">
+                    <div class="row g-5">
+                        <!-- Entrée Details -->
+                        <div class="col-md-6 border-end-md">
+                            <div class="d-flex align-items-start gap-4">
+                                <div class="icon-box bg-primary text-white rounded-4 shadow-sm" style="width: 50px; height: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-box-arrow-in-right fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <label class="text-muted small text-uppercase fw-extrabold mb-1 d-block opacity-75">Enregistrement d'Entrée</label>
+                                    <h4 class="fw-extrabold mb-1">{{ visite.heure_entree|date:"H:i" }}</h4>
+                                    <div class="text-dark fw-bold small mb-3">{{ visite.heure_entree|date:"d F Y" }}</div>
+                                    
+                                    <div class="bg-light p-3 rounded-4 border shadow-xs">
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <i class="bi bi-door-open-fill text-primary"></i>
+                                            <span class="small fw-extrabold text-uppercase">Porte {{ visite.porte.numero }}</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-shield-check text-muted"></i>
+                                            <span class="small text-muted-custom fw-bold">Agent: @{{ visite.agent_entree.username }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sortie Details -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-4">
+                                <div class="icon-box {% if visite.heure_sortie %}bg-dark text-white shadow-sm{% else %}bg-light text-muted{% endif %} rounded-4" style="width: 50px; height: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-box-arrow-right fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <label class="text-muted small text-uppercase fw-extrabold mb-1 d-block opacity-75">Confirmation de Sortie</label>
+                                    {% if visite.heure_sortie %}
+                                        <h4 class="fw-extrabold mb-1">{{ visite.heure_sortie|date:"H:i" }}</h4>
+                                        <div class="text-dark fw-bold small mb-3">{{ visite.heure_sortie|date:"d F Y" }}</div>
+                                        
+                                        <div class="bg-light p-3 rounded-4 border shadow-xs">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi bi-shield-lock-fill text-dark"></i>
+                                                <span class="small text-muted-custom fw-bold">Agent: @{{ visite.agent_sortie.username }}</span>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <h4 class="text-muted italic mb-3">En attente...</h4>
+                                        <div class="alert alert-warning border-0 small py-2 px-3 fw-bold rounded-3">
+                                            Le visiteur est encore présent.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Motif & Obs -->
+                        <div class="col-12">
+                            <div class="bg-light p-4 rounded-4 border-start border-4 border-primary">
+                                <label class="text-primary small text-uppercase fw-extrabold mb-3 d-block letter-spacing-1">Motif de la Visite</label>
+                                <p class="mb-0 text-dark fw-medium fs-5" style="white-space: pre-wrap; line-height: 1.6;">"{{ visite.motif|default:"Aucun motif spécifié." }}"</p>
+                            </div>
+                        </div>
+
+                        {% if visite.observations %}
+                        <div class="col-12">
+                            <label class="text-muted small text-uppercase fw-extrabold mb-2 d-block opacity-75">Notes & Observations de l'Agent</label>
+                            <div class="p-3 border rounded-3 bg-light-subtle italic text-muted-custom small">
+                                {{ visite.observations }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Footer -->
+            <div class="card-footer bg-white p-4 border-top d-flex flex-wrap gap-3">
+                {% if visite.statut == 'PRESENT' %}
+                <a href="{% url 'visite_sortie' visite.pk %}" class="btn btn-success px-5 py-3 rounded-3 shadow-lg fw-bold">
+                    <i class="bi bi-door-closed-fill me-2"></i> ENREGISTRER LA SORTIE
+                </a>
+                {% endif %}
+                <button onclick="window.print()" class="btn btn-outline-dark px-4 py-3 rounded-3 fw-bold border-2">
+                    <i class="bi bi-printer-fill me-2"></i> IMPRIMER LA FICHE
+                </button>
+                <a href="{% url 'visite_list' %}" class="btn btn-light px-4 py-3 rounded-3 border fw-bold text-muted-custom ms-md-auto">
+                    RETOUR AU JOURNAL
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fw-extrabold { font-weight: 800; }
+    .letter-spacing-1 { letter-spacing: 1px; }
+    .hover-primary:hover { color: var(--primary-color) !important; transform: translateX(5px); }
+    .transition-all { transition: all 0.3s ease; }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+    
+    @media (min-width: 768px) {
+        .border-end-md { border-right: 1px solid rgba(0,0,0,0.08) !important; }
+    }
+
+    @media print {
+        .sidebar, .topbar, .btn, .card-footer, .breadcrumb { display: none !important; }
+        .main-content { margin-left: 0 !important; padding: 0 !important; }
+        .card { border: none !important; box-shadow: none !important; }
+        .card-body { padding: 0 !important; }
+        .bg-light { background: transparent !important; }
+    }
+</style>
+{% endblock %}

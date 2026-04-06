@@ -1,0 +1,33 @@
+{% extends "core/pdf/base_pdf.html" %}
+{% block pdf_content %}
+<div style="width: 8.5cm; height: 5.5cm; border: 2px solid #2563EB; border-radius: 10px; padding: 15px; margin: 0 auto; background: #fff; font-family: sans-serif; position: relative;">
+    <div style="border-bottom: 2px solid #2563EB; padding-bottom: 8px; margin-bottom: 12px; text-align: center;">
+        <h2 style="margin: 0; color: #2563EB; font-size: 16pt; font-weight: 800; letter-spacing: 1px;">BADGE VISITEUR</h2>
+        <small style="color: #666; font-size: 8pt; text-transform: uppercase;">UWAZY GESTION - {% now "Y" %}</small>
+    </div>
+    
+    <div style="line-height: 1.4;">
+        <div style="float: left; width: 70px; margin-right: 15px;">
+            <div style="width: 65px; height: 65px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; text-align: center; line-height: 65px; font-weight: 900; font-size: 24pt; color: #2563EB;">
+                {{ visite.visiteur.nom|slice:":1" }}{{ visite.visiteur.prenom|slice:":1" }}
+            </div>
+        </div>
+        <div style="margin-left: 85px;">
+            <h3 style="margin: 0 0 5px; font-size: 14pt; color: #000; text-transform: uppercase; font-weight: bold;">{{ visite.visiteur.prenom }} {{ visite.visiteur.nom }}</h3>
+            <p style="margin: 3px 0; font-size: 10pt; color: #444;"><strong>CNIB:</strong> {{ visite.visiteur.numero_cni }}</p>
+            {% if visite.visiteur.profession %}
+            <p style="margin: 3px 0; font-size: 10pt; color: #444;"><strong>Profession:</strong> {{ visite.visiteur.profession }}</p>
+            {% endif %}
+            <p style="margin: 3px 0; font-size: 10pt; color: #444;"><strong>Destination:</strong> <span style="color: #2563EB; font-weight: bold;">{{ visite.service_visite.nom }}</span></p>
+             <p style="margin: 3px 0; font-size: 10pt; color: #444;"><strong>Entrée:</strong> {{ visite.heure_entree|date:"H:i" }}</p>
+        </div>
+    </div>
+    
+    <div style="clear: both; margin-top: 15px; border-top: 2px solid #2563EB; padding-top: 10px; text-align: center;">
+        <div style="background: #1F2937; color: #fff; padding: 5px 0; font-weight: bold; border-radius: 4px; font-size: 11pt; letter-spacing: 2px;">
+            ACCÈS AUTORISÉ
+        </div>
+        <p style="margin: 6px 0 0; font-size: 7.5pt; color: #666; font-style: italic;">Veuillez porter ce badge de façon visible sur le site.</p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Confirmer l'archivage | VMS{% endblock %}
+{% block page_title %}Confirmation d'Archivage{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm overflow-hidden rounded-4">
+            <div class="card-body p-5 text-center">
+                <div class="icon-shape bg-warning bg-opacity-10 text-warning rounded-circle mx-auto mb-4" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+                </div>
+                
+                <h3 class="fw-bold text-dark mb-3">Souhaitez-vous archiver cette entité ?</h3>
+                <p class="text-muted mb-4 fs-5 px-md-3">
+                    Vous êtes sur le point d'archiver 
+                    <span class="text-dark fw-bold">
+                        {% if object.prenom %}{{ object.prenom }} {{ object.nom }}{% else %}{{ object.nom }}{% endif %}
+                    </span>.
+                </p>
+                
+                <div class="card bg-light border-0 rounded-4 mb-4 py-3">
+                    <div class="card-body">
+                        <p class="small text-muted mb-0">
+                            <strong>Note :</strong> L'entité ne sera plus visible dans les listes actives mais restera accessible dans l'historique des <a href="{% url 'archive_list' %}" class="fw-bold">archives</a> pour consultation ultérieure.
+                        </p>
+                    </div>
+                </div>
+
+                <form method="post" class="d-flex flex-column gap-3 justify-content-center">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger w-100 py-3 rounded-pill fw-bold fs-5 shadow-sm">
+                        <i class="bi bi-archive-fill me-2"></i> CONFIRMER L'ARCHIVAGE
+                    </button>
+                    <a href="javascript:history.back()" class="btn btn-link text-decoration-none fw-bold text-muted">Annuler et revenir en arrière</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

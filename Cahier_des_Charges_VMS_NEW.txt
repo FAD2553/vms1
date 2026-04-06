@@ -1,0 +1,61 @@
+🚀 CAHIER DES CHARGES : VISITOR MANAGEMENT SYSTEM (VMS)
+Propulsé par UWAZY | Système Intelligent de Gestion des Flux Visiteurs
+
+🎯 1️⃣ VISION ET OBJECTIFS
+Numériser, sécuriser et fluidifier l'accueil des visiteurs au sein de l'organisation. 
+Le système transforme le registre papier traditionnel en un outil de pilotage en temps réel.
+- ✅ Identification sécurisée par CNIB avec stockage privé.
+- ✅ Automatisation de la saisie via OCR (Extraction d'identité).
+- ✅ Monitoring en temps réel des flux (Présence sur site).
+- ✅ Analyse prédictive et statistique (Fréquentation par service).
+
+📊 2️⃣ TABLEAU DE BORD & ANALYTICS
+Un centre de commande premium offrant une visibilité immédiate :
+- 📈 Indicateurs clés : Visiteurs aujourd'hui, hebdomadaires, mensuels et total services.
+- 🕒 Statut Temps Réel : Compteur précis des personnes actuellement à l'intérieur.
+- 📊 Graphiques Dynamiques : Évolution des entrées (Jour / Semaine / Mois / Année) via Chart.js.
+- ⚡ Accès Rapide : Listes des dernières entrées et des visiteurs actuellement présents.
+
+👥 3️⃣ GESTION DES VISITEURS (CRM VISITEUR)
+Une base de données centralisée et intelligente :
+- 🔍 Recherche Rapide : Filtrage instantané par Nom, CNIB ou Téléphone.
+- 📄 Fiche Individuelle : Profil complet avec historique détaillé des passages.
+- 🎨 Analytics Visiteur : Graphique en anneau (Doughnut) montrant la répartition de ses visites par service.
+- 🛡️ Sécurité Flux : Impossibilité d'enregistrer une nouvelle visite pour un visiteur déjà présent sur place ("Anti-Double Entrée").
+- 📄 Justificatifs : Gestion sécurisée des scans CNIB (Recto/Verso) avec visualisation privée.
+
+🏢 4️⃣ PILOTAGE PAR SERVICE
+Chaque département (RH, Direction, etc.) possède ses propres métriques :
+- 📍 Dashboard de Service : Page dédiée affichant les visites du jour, de la semaine et du mois.
+- 👥 Occupation : Indicateur des visiteurs actuellement présents spécifiquement dans ce service.
+- 📈 Graphique d'Évolution : Courbe de fréquentation sur les 7 derniers jours.
+- 🖱️ Navigation Intuitive : Liste des services cliquable avec recherche instantanée.
+
+👤 5️⃣ ADMINISTRATION & SÉCURITÉ (ADMIN ONLY)
+Le cœur du système, réservé au super-utilisateur :
+- 🔑 Gestion des Agents : CRUD complet des comptes réceptionnistes.
+- 🪄 Génération Automatique : Création intelligente d'identifiants et de mots de passe complexes lors de l'ajout d'un nouvel agent.
+- 📜 Journal d'Audit : Historique exhaustif (LogAction) de TOUTES les actions effectuées sur le système (Qui a fait quoi et quand).
+- 📦 Archivage : Mise en archive des entités (Visiteurs/Services) pour conserver l'historique sans encombrer l'interface active.
+- 📄 Rapports PDF : Génération de rapports d'activité personnalisés par période, service ou visiteur.
+
+💻 6️⃣ ARCHITECTURE TECHNIQUE
+- Framework : Django 6.0 (Python) - Robustesse et sécurité.
+- Interface : Modern CSS & JavaScript - Expérience utilisateur fluide et réactive.
+- Visualisation : Chart.js - Graphiques interactifs et esthétiques.
+- OCR : Module d'extraction intelligent pour pièces d'identité.
+- Stockage : Système de fichiers sécurisé pour les documents confidentiels.
+- Production de documents : xhtml2pdf pour les rapports administratifs.
+
+📐 7️⃣ CONCEPTION UML (DÉFINITION DU SYSTÈME)
+Le système repose sur une architecture logicielle rigoureuse, modélisée selon les standards UML :
+
+- 👤 Diagramme de Cas d'Utilisation : Définit deux acteurs clés. L'Agent Réceptionniste (enregistrement, scan OCR, sorties) et l'Administrateur (spécialisation incluant la gestion des comptes, l'audit complet, l'archivage et les rapports PDF).
+- 🏗️ Diagramme de Classes : Structure les données en 8 classes majeures (Visiteur, Passage, Service, Agent, JournalAudit, etc.). Définit les relations (1..*), les attributs et les méthodes nécessaires au fonctionnement de la base de données PostgreSQL.
+- 🔄 Diagramme de Séquence : Détaille la chronologie des interactions lors de l'accueil. Met en lumière la communication entre l'Interface, le Contrôleur et le Module OCR, ainsi que le système de blocage "anti-double entrée" (fragment alt).
+- 🚥 Diagramme État-Transition : Modélise le cycle de vie d'une visite (Passage). Passage d'états : EN ATTENTE (Identification) → PRÉSENT (Suivi actif) → SORTI (Historisé). Inclut l'état exceptionnel "SORTI FORCÉ" géré par l'admin.
+- 📋 Diagramme d'Activité : Représente le workflow opérationnel à travers deux couloirs (Agent et Système). Visualise les bifurcations (Fork/Join) pour le scanner et les nœuds de décision pour la validation de sécurité.
+- 🌐 Diagramme de Déploiement : Cartographie l'infrastructure technique en 3 nœuds (Poste Agent avec scanner USB, Serveur d'Application Django via Nginx/Gunicorn, et Serveur de Base de Données administré via PgAdmin).
+
+---------------------------------------------------------
+© 2026 UWAZY VMS | Document Technique de Référence

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | UWAZY{% endblock %}
+{% block page_title %}Gestion des Agents{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-lg-7 col-xl-6">
+        <div class="card border-0 shadow-lg overflow-hidden mb-5 rounded-4">
+            <div class="card-header bg-dark text-white py-4 border-0 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #1a1d23 0%, #000000 100%) !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary p-2 rounded-3 shadow-sm">
+                        <i class="bi bi-person-badge-fill text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-extrabold text-uppercase letter-spacing-1">{{ title }}</h5>
+                        <small class="text-white-50 fw-bold">Configuration du compte agent</small>
+                    </div>
+                </div>
+                {% if edit %}
+                    <span class="badge rounded-pill bg-primary px-3 shadow-xs small">ID: {{ form.instance.username }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="card-body p-4 p-md-5">
+                {% if not edit %}
+                <div class="alert alert-primary rounded-4 border-0 shadow-sm mb-5 py-3 px-4 small d-flex align-items-center gap-3 bg-primary bg-opacity-10 border-start border-4 border-primary">
+                   <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center shadow-xs" style="width: 36px; height: 36px; min-width:36px;">
+                       <i class="bi bi-magic"></i>
+                   </div>
+                   <div class="fw-bold text-primary-emphasis">L'identifiant (agent_...) et le mot de passe seront **générés automatiquement** après validation.</div>
+                </div>
+                {% endif %}
+                
+                <form method="post" class="row g-4">
+                    {% csrf_token %}
+                    
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Prénom <span class="text-danger">*</span></label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.first_name.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Nom de famille <span class="text-danger">*</span></label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.last_name.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-12 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Affectation à une Porte <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-3"><i class="bi bi-door-open text-primary"></i></span>
+                            {{ form.porte_actuelle }}
+                        </div>
+                        <div class="form-text small opacity-75 mt-2 italic"><i class="bi bi-info-circle me-1"></i> Sélectionnez la porte que cet agent gérera à sa connexion.</div>
+                        {% if form.porte_actuelle.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.porte_actuelle.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Adresse Email</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<div class="text-danger extra-small mt-1 fw-bold">{{ form.email.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <div class="form-check form-switch p-3 bg-light rounded-4 border shadow-xs mb-0 d-flex align-items-center">
+                            {{ form.is_active }}
+                            <label class="form-check-label fw-bold small text-muted text-uppercase ms-3 pt-1" for="{{ form.is_active.id_for_label }}">
+                                COMPTE ACTIF
+                            </label>
+                        </div>
+                        <div class="text-muted extra-small ps-3 mt-1 fst-italic">Si désactivé, l'agent n'aura plus accès au système.</div>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="col-12">
+                        <div class="alert alert-danger rounded-3 py-2 px-3 small border-0 shadow-sm mb-0 fw-bold">
+                            {% for error in form.non_field_errors %}<i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}{% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="col-12 mt-5 pt-3 border-top d-flex gap-3">
+                        <button type="submit" class="btn btn-primary px-5 py-3 rounded-3 shadow-lg fw-bold flex-grow-1">
+                            <i class="bi bi-check-circle-fill me-2"></i> {% if edit %}METTRE À JOUR LE PROFIL{% else %}CRÉER LE COMPTE AGENT{% endif %}
+                        </button>
+                        <a href="{% url 'user_list' %}" class="btn btn-light px-4 py-3 rounded-3 border fw-bold text-muted-custom">Annuler</a>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="bg-light p-3 text-center border-top">
+                <small class="text-muted fw-bold d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-shield-lock-fill text-dark"></i> Sécurité des accès UWAZY VMS
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.fw-extrabold { font-weight: 800; }
+.letter-spacing-1 { letter-spacing: 1.2px; }
+.shadow-xs { box-shadow: 0 2px 5px rgba(0,0,0,0.04); }
+.extra-small { font-size: 0.75rem; }
+.input-group-text { border-color: #dee2e6; }
+.form-check-input:checked { background-color: var(--primary-color); border-color: var(--primary-color); }
+</style>
+{% endblock %}

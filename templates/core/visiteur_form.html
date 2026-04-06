@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | VMS{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm overflow-hidden mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-person-plus me-2 text-primary"></i> {{ title }}</h6>
+                {% if not edit %}
+                <span class="badge bg-light text-primary border border-primary-subtle px-3 py-1 rounded-pill">Étape 1/2</span>
+                {% endif %}
+            </div>
+            <div class="card-body p-4">
+                {% if not edit %}
+                <!-- OCR Section - Modernized -->
+                <div class="card bg-primary bg-opacity-10 border-0 mb-4 rounded-4 overflow-hidden">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="icon-shape bg-primary text-white rounded-3 p-3 shadow-sm">
+                                <i class="bi bi-camera fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold text-primary mb-1">Extraction OCR Intelligente</h6>
+                                <p class="text-muted small mb-3">Téléversez une photo nette de la <strong>face avant (recto)</strong> de la CNIB pour un remplissage automatique.</p>
+                                
+                                <div class="input-group shadow-xs rounded-pill overflow-hidden bg-white border">
+                                    <input type="file" id="ocr-file" class="form-control border-0 bg-transparent" accept="image/*" style="cursor: pointer;">
+                                    <button type="button" id="camera-trigger" class="btn btn-light border-start border-end px-3 text-primary camera-field-trigger" data-camera-target="ocr-file" title="Prendre une photo">
+                                        <i class="bi bi-camera fs-5"></i>
+                                    </button>
+                                    <button type="button" id="ocr-btn" class="btn btn-primary px-4 fw-bold d-flex align-items-center gap-2">
+                                        <i class="bi bi-stars"></i> Scanner
+                                    </button>
+                                </div>
+                                <div id="ocr-result" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" id="visiteurForm" class="row g-3">
+                    {% csrf_token %}
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Nom <span class="text-danger">*</span></label>
+                        {{ form.nom }}
+                        {% if form.nom.errors %}<div class="text-danger extra-small mt-1">{{ form.nom.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Prénom <span class="text-danger">*</span></label>
+                        {{ form.prenom }}
+                        {% if form.prenom.errors %}<div class="text-danger extra-small mt-1">{{ form.prenom.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Numéro CNIB <span class="text-danger">*</span></label>
+                        {{ form.numero_cni }}
+                        {% if form.numero_cni.errors %}<div class="text-danger extra-small mt-1">{{ form.numero_cni.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Date de naissance</label>
+                        {{ form.date_naissance }}
+                        {% if form.date_naissance.errors %}<div class="text-danger extra-small mt-1">{{ form.date_naissance.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Sexe</label>
+                        {{ form.sexe }}
+                        {% if form.sexe.errors %}<div class="text-danger extra-small mt-1">{{ form.sexe.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Profession</label>
+                        {{ form.profession }}
+                        {% if form.profession.errors %}<div class="text-danger extra-small mt-1">{{ form.profession.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Téléphone</label>
+                        {{ form.telephone }}
+                        {% if form.telephone.errors %}<div class="text-danger extra-small mt-1">{{ form.telephone.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Adresse</label>
+                        {{ form.adresse }}
+                        {% if form.adresse.errors %}<div class="text-danger extra-small mt-1">{{ form.adresse.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">CNIB Recto</label>
+                        <div class="input-group">
+                            {{ form.scan_cni_recto }}
+                            <button type="button" class="btn btn-outline-primary camera-field-trigger" data-camera-target="id_scan_cni_recto">
+                                <i class="bi bi-camera"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-1">Image claire du recto de la carte</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">CNIB Verso</label>
+                        <div class="input-group">
+                            {{ form.scan_cni_verso }}
+                            <button type="button" class="btn btn-outline-primary camera-field-trigger" data-camera-target="id_scan_cni_verso">
+                                <i class="bi bi-camera"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-1">Image claire du verso de la carte</small>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="col-12">
+                        <div class="alert alert-danger rounded-3 py-2 px-3 small border-0 shadow-xs mb-0">
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="col-12 mt-4 pt-3 border-top d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm fw-bold">
+                            <i class="bi bi-check-lg me-2"></i> {% if edit %}Mettre à jour{% else %}Suivant : Enregistrer Visite{% endif %}
+                        </button>
+                        <a href="{% url 'visiteur_list' %}" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-bold">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Camera Capture Modal -->
+<div class="modal fade" id="cameraModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg overflow-hidden bg-black">
+            <div class="modal-header border-0 position-absolute top-0 w-100 z-3 p-3 bg-gradient-dark">
+                <h6 class="modal-title text-white fw-bold shadow-sm"><i class="bi bi-camera me-2"></i> Capturer la CNIB</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="close-camera-btn"></button>
+            </div>
+            <div class="modal-body p-0 d-flex align-items-center justify-content-center" style="min-height: 400px; background: #000;">
+                <video id="camera-video" autoplay playsinline class="w-100 h-100" style="object-fit: contain; max-height: 70vh;"></video>
+                <div id="camera-loading" class="position-absolute text-white text-center">
+                    <div class="spinner-border mb-2 text-primary"></div>
+                    <p class="small fw-medium">Initialisation du flux...</p>
+                </div>
+                
+                <!-- Improved Overlay Guide for Cropping -->
+                <div id="camera-guide" class="position-absolute top-50 start-50 translate-middle pointer-events-none" 
+                     style="width: 85%; height: 55%; border: 3px dashed var(--primary-color); border-radius: 12px; box-shadow: 0 0 0 5000px rgba(0,0,0,0.5); pointer-events: none; max-width: 500px; max-height: 300px;">
+                    <div class="position-absolute top-0 start-50 translate-middle-x bg-primary text-white px-2 py-1 rounded-bottom extra-small fw-bold text-nowrap" style="font-size: 9px; letter-spacing: 0.5px;">ALIGNEZ LA CARTE ICI</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-black bg-opacity-75 p-3 flex-column">
+                <div class="d-flex justify-content-center align-items-center gap-4 w-100 mb-2">
+                    <button type="button" id="switch-camera-btn" class="btn btn-dark rounded-circle border-secondary" style="width: 50px; height: 50px;" title="Changer de caméra">
+                        <i class="bi bi-arrow-repeat fs-5"></i>
+                    </button>
+                    <button type="button" id="capture-btn" class="btn btn-white rounded-circle shadow-lg p-3" style="width: 74px; height: 74px; background: white; border: 8px solid rgba(255,255,255,0.25);">
+                        <div class="bg-primary rounded-circle w-100 h-100"></div>
+                    </button>
+                    <div style="width: 50px;"></div> <!-- Spacer -->
+                </div>
+                <p class="text-white-50 extra-small mb-0 text-center"><i class="bi bi-info-circle me-1"></i> La photo sera automatiquement rognée</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-dark { background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%); }
+    #camera-video { transform: scaleX(1); }
+    .btn-white:active { transform: scale(0.9); transition: 0.1s; }
+    .modal-content.bg-black { color: #fff; }
+    
+    @media (max-width: 576px) {
+        .modal-dialog { margin: 0; max-width: 100%; height: 100%; }
+        .modal-content { height: 100%; border-radius: 0; }
+        .modal-body { height: calc(100% - 160px); }
+        #camera-guide { width: 90% !important; height: 50% !important; }
+    }
+</style>
+
+<style>
+    .icon-shape { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; }
+    .extra-small { font-size: 0.75rem; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('ocr-btn')?.addEventListener('click', function() {
+    const fileInput = document.getElementById('ocr-file');
+    const resultDiv = document.getElementById('ocr-result');
+    const btn = this;
+    
+    if (!fileInput.files.length) {
+        resultDiv.innerHTML = '<div class="alert alert-warning rounded-3 small py-2 border-0 shadow-xs">Veuillez sélectionner une image.</div>';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', fileInput.files[0]);
+
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Analyse...';
+    btn.disabled = true;
+    resultDiv.innerHTML = '<div class="text-primary small fw-medium"><i class="bi bi-cpu me-2"></i> Intelligence artificielle en action : Analyse des données...</div>';
+
+    fetch('{% url "ocr_scan" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+        
+        if (data.success && data.data && Object.keys(data.data).length > 0) {
+            resultDiv.innerHTML = '<div class="alert alert-success rounded-3 small py-2 d-flex align-items-center gap-2 border-0 shadow-xs"><i class="bi bi-check-circle-fill"></i> Données extraites avec succès ! Les champs ont été pré-remplis.</div>';
+            
+            // Animation for visual feedback
+            const fillField = (id, value) => {
+                const el = document.getElementById(id);
+                if (el && value) {
+                    el.value = value;
+                    el.classList.add('is-valid');
+                    setTimeout(() => el.classList.remove('is-valid'), 2000);
+                }
+            };
+
+            const extracted = data.data;
+            if (extracted.nom) fillField('id_nom', extracted.nom);
+            if (extracted.prenom) fillField('id_prenom', extracted.prenom);
+            if (extracted.numero_cni) fillField('id_numero_cni', extracted.numero_cni);
+            if (extracted.profession) fillField('id_profession', extracted.profession);
+            
+            if (extracted.date_naissance) {
+                // Handle different date formats or convert to yyyy-mm-dd
+                let dateVal = extracted.date_naissance;
+                if (dateVal.includes('/')) {
+                    const parts = dateVal.split('/');
+                    if (parts.length === 3) dateVal = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                fillField('id_date_naissance', dateVal);
+            }
+            if (extracted.sexe) {
+                const sexeEl = document.getElementById('id_sexe');
+                if (sexeEl) {
+                    if (extracted.sexe.toUpperCase().startsWith('M')) sexeEl.value = 'M';
+                    else if (extracted.sexe.toUpperCase().startsWith('F')) sexeEl.value = 'F';
+                }
+            }
+        } else {
+            resultDiv.innerHTML = '<div class="alert alert-info rounded-3 small py-2 border-0 shadow-xs"><i class="bi bi-info-circle me-2"></i> Échec de l\'extraction automatique. Veuillez saisir les informations manuellement.</div>';
+        }
+    })
+    .catch(() => {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+        resultDiv.innerHTML = '<div class="alert alert-danger rounded-3 small py-2 border-0 shadow-xs">Erreur lors de la communication avec le serveur OCR.</div>';
+    });
+});
+
+// Camera Capture Logic
+(function() {
+    let stream = null;
+    let currentFacingMode = 'environment';
+    let currentTargetId = null;
+    const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
+    const video = document.getElementById('camera-video');
+    const loading = document.getElementById('camera-loading');
+    const captureBtn = document.getElementById('capture-btn');
+    const switchBtn = document.getElementById('switch-camera-btn');
+    
+    async function startCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        loading.classList.remove('d-none');
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: currentFacingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                audio: false
+            });
+            video.srcObject = stream;
+            loading.classList.add('d-none');
+            // Mirror only when using front camera
+            video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+        } catch (err) {
+            console.error("Erreur caméra:", err);
+            loading.innerHTML = `<div class='text-danger p-4 text-center'><i class='bi bi-exclamation-triangle fs-2'></i><br>Accès caméra refusé ou non supporté.</div>`;
+        }
+    }
+
+    document.querySelectorAll('.camera-field-trigger').forEach(trigger => {
+        trigger.addEventListener('click', () => {
+            currentTargetId = trigger.getAttribute('data-camera-target');
+            modal.show();
+            startCamera();
+        });
+    });
+
+    switchBtn.addEventListener('click', () => {
+        currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+        startCamera();
+    });
+
+    document.getElementById('close-camera-btn').addEventListener('click', () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+    });
+
+    captureBtn.addEventListener('click', () => {
+        const canvas = document.createElement('canvas');
+        
+        // Use full stream resolution for maximum accuracy
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        
+        // No smoothing and high-quality drawing
+        ctx.imageSmoothingEnabled = false;
+        
+        // Handle mirroring if using front camera
+        if (currentFacingMode === 'user') {
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+        }
+        
+        // Draw the WHOLE frame. The server-side OCR will find the info.
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+            const fileName = `capture_${currentTargetId}.jpg`;
+            const file = new File([blob], fileName, { type: "image/jpeg" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            
+            const fileInput = document.getElementById(currentTargetId);
+            if (fileInput) {
+                fileInput.files = dataTransfer.files;
+                
+                if (currentTargetId === 'ocr-file') {
+                    const resultDiv = document.getElementById('ocr-result');
+                    resultDiv.innerHTML = '<div class="alert alert-info rounded-3 small py-2 border-0 shadow-xs"><i class="bi bi-image me-2"></i> Photo capturée ! Cliquez sur "Scanner" pour remplir les champs.</div>';
+                }
+            }
+            
+            modal.hide();
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }, 'image/jpeg', 0.98);
+    });
+})();
+</script>
+{% endblock %}

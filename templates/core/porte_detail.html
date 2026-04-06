@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Détails de la Porte {{ porte.numero }} | UWAZY{% endblock %}
+{% block page_title %}Statistiques de la Porte {{ porte.numero }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-lg-8">
+        <h3 class="fw-bold mb-1"><i class="bi bi-door-open-fill text-primary me-2"></i>Porte {{ porte.numero }}</h3>
+        <p class="text-muted-custom small mb-0">{{ porte.description|default:"Description non spécifiée." }}</p>
+    </div>
+    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <div class="d-flex gap-2 justify-content-lg-end">
+            <a href="{% url 'porte_edit' porte.pk %}" class="btn btn-outline-primary btn-sm px-3 rounded-pill fw-bold">
+                <i class="bi bi-pencil me-1"></i> Modifier
+            </a>
+            <a href="{% url 'porte_list' %}" class="btn btn-light btn-sm px-3 rounded-pill border fw-bold">
+                <i class="bi bi-arrow-left me-1"></i> Retour
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Porte Stats Grid -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="stat-card p-4">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-value">{{ total_visites }}</div>
+                    <div class="stat-label">Total Entrées</div>
+                </div>
+                <div class="stat-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-person-check-fill"></i>
+                </div>
+            </div>
+            <div class="mt-3 small text-muted-custom">Historique complet</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card p-4">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-value text-success">{{ presents }}</div>
+                    <div class="stat-label">Présents Actuels</div>
+                </div>
+                <div class="stat-icon bg-success-subtle text-success">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </div>
+            </div>
+            <div class="mt-3 small text-muted-custom">Actuellement à cette porte</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card p-4">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-value text-info">{{ duree_moyenne }} <small style="font-size: 0.8rem;">min</small></div>
+                    <div class="stat-label">Durée Moyenne</div>
+                </div>
+                <div class="stat-icon bg-info-subtle text-info">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+            </div>
+            <div class="mt-3 small text-muted-custom">Temps de passage moyen</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card p-4">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-value text-warning">{{ porte.agents_affectes.count }}</div>
+                    <div class="stat-label">Agents Affectés</div>
+                </div>
+                <div class="stat-icon bg-warning-subtle text-warning">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+            </div>
+            <div class="mt-3 small text-muted-custom">Effectif de surveillance</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0 mb-4 h-100">
+            <div class="card-header border-0 bg-white p-4">
+                <h5 class="fw-bold mb-0">Agents en Poste</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for profile in porte.agents_affectes.all %}
+                    <div class="list-group-item p-4 border-0 d-flex align-items-center gap-3">
+                        <div class="bg-primary text-white p-2 rounded-3 fw-bold" style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
+                            {{ profile.user.username|slice:':1'|upper }}
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">{{ profile.user.first_name }} {{ profile.user.last_name }}</h6>
+                            <small class="text-muted-custom">Agent: {{ profile.user.username }}</small>
+                            {% if profile.user.is_active %}<span class="badge bg-success-subtle text-success ms-1 small px-1 py-0">ACTIF</span>{% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-4 text-center">
+                        <p class="text-muted small mb-0 fst-italic">Aucun agent n'est actuellement affecté à cette porte.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header border-0 bg-white p-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">Dernières Activités à cette Porte</h5>
+                <a href="{% url 'visite_list' %}?porte={{ porte.pk }}" class="btn btn-link text-primary text-decoration-none fw-bold small">Voir tout</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Visiteur</th>
+                                <th>Heure d'Entrée</th>
+                                <th>Agent (Entrée)</th>
+                                <th>Statut</th>
+                                <th class="text-end pe-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in visites %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">{{ v.visiteur.prenom }} {{ v.visiteur.nom }}</div>
+                                    <small class="text-muted-custom small">{{ v.service_visite.nom }}</small>
+                                </td>
+                                <td>{{ v.heure_entree|date:"H:i" }}</td>
+                                <td><span class="badge bg-light text-dark fw-normal border">{{ v.agent_entree.username|default:"N/A" }}</span></td>
+                                <td>
+                                    {% if v.statut == 'PRESENT' %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">Sur Place</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2 rounded-pill">Sorti</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'visite_detail' v.pk %}" class="btn btn-sm btn-icon bg-light-subtle" data-bs-toggle="tooltip" title="Détails">
+                                        <i class="bi bi-eye text-primary"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center p-5 text-muted fst-italic">Historique vide pour cette porte.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card { border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); }
+.stat-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+.btn-icon { width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05); display: inline-flex; align-items: center; justify-content: center; }
+.btn-icon:hover { background: #DBEAFE; }
+</style>
+{% endblock %}
