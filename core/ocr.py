@@ -59,6 +59,16 @@ def extract_cnib_info(image_path):
                 date_str = date_str.replace('.', '/').replace('-', '/')
                 result['date_naissance'] = date_str
 
+            # Extraction du Sexe (M ou F)
+            match_sexe = re.search(r'SEXE\s*[:;]?\s*([MF])', line_upper)
+            if match_sexe and 'sexe' not in result:
+                result['sexe'] = match_sexe.group(1)
+
+            # Extraction de la Profession
+            match_prof = re.search(r'PROFESSION\s*[:;]?\s*(.+)', line_upper)
+            if match_prof and 'profession' not in result:
+                result['profession'] = match_prof.group(1).strip()
+
         # PASSE 2: Extraction ciblée pour le numéro CNI (BXXXXXXXX)
         # Preprocessing: Convert to grayscale, resize 2x, light threshold
         img_processed = img_original.convert('L')

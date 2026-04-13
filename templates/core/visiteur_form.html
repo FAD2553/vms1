@@ -222,6 +222,19 @@ document.getElementById('ocr-btn')?.addEventListener('click', function() {
         btn.disabled = false;
         
         if (data.success && data.data && Object.keys(data.data).length > 0) {
+            const extracted = data.data;
+
+            // Redirect if visitor already exists
+            if (extracted.already_exists && extracted.redirect_url) {
+                resultDiv.innerHTML = '<div class="alert alert-info rounded-3 small py-3 d-flex align-items-center gap-3 border-0 shadow-xs animate__animated animate__fadeIn">' +
+                                     '<div class="spinner-border spinner-border-sm text-primary"></div>' +
+                                     '<div>Ce visiteur est déjà dans notre base. Redirection vers l\'entrée...</div></div>';
+                setTimeout(() => {
+                    window.location.href = extracted.redirect_url;
+                }, 1500);
+                return;
+            }
+
             resultDiv.innerHTML = '<div class="alert alert-success rounded-3 small py-2 d-flex align-items-center gap-2 border-0 shadow-xs"><i class="bi bi-check-circle-fill"></i> Données extraites avec succès ! Les champs ont été pré-remplis.</div>';
             
             // Animation for visual feedback
@@ -234,26 +247,39 @@ document.getElementById('ocr-btn')?.addEventListener('click', function() {
                 }
             };
 
-            const extracted = data.data;
             if (extracted.nom) fillField('id_nom', extracted.nom);
             if (extracted.prenom) fillField('id_prenom', extracted.prenom);
             if (extracted.numero_cni) fillField('id_numero_cni', extracted.numero_cni);
             if (extracted.profession) fillField('id_profession', extracted.profession);
             
             if (extracted.date_naissance) {
-                // Handle different date formats or convert to yyyy-mm-dd
+                // Pour le champ date (input type=date)
                 let dateVal = extracted.date_naissance;
                 if (dateVal.includes('/')) {
                     const parts = dateVal.split('/');
-                    if (parts.length === 3) dateVal = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    if (parts.length === 3) {
+                        // On s'assure du format yyyy-mm-dd
+                        dateVal = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                    }
                 }
                 fillField('id_date_naissance', dateVal);
             }
+
             if (extracted.sexe) {
                 const sexeEl = document.getElementById('id_sexe');
                 if (sexeEl) {
-                    if (extracted.sexe.toUpperCase().startsWith('M')) sexeEl.value = 'M';
-                    else if (extracted.sexe.toUpperCase().startsWith('F')) sexeEl.value = 'F';
+                    const s = extracted.sexe.toUpperCase();
+                    let val = '';
+                    if (s.includes('M')) val = 'M';
+                    else if (s.includes('F')) val = 'F';
+                    
+                    if (val) {
+                        sexeEl.value = val;
+                        // Déclencher l'événement 'change' pour Select2 ou autres plugins
+                        sexeEl.dispatchEvent(new Event('change'));
+                        sexeEl.classList.add('is-valid');
+                        setTimeout(() => sexeEl.classList.remove('is-valid'), 2000);
+                    }
                 }
             }
         } else {

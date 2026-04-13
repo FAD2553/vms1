@@ -175,6 +175,15 @@ def dashboard(request):
 
 @login_required
 def visiteur_list(request):
+    # Bloquer l'agent sans porte
+    if not request.user.is_superuser:
+        try:
+            if not request.user.profile.porte_actuelle:
+                messages.error(request, "Accès refusé : Vous devez être affecté à une porte pour consulter la liste des visiteurs.")
+                return redirect('dashboard')
+        except AgentProfile.DoesNotExist:
+            return redirect('dashboard')
+
     query = request.GET.get('q', '')
     visiteurs = Visiteur.objects.filter(is_archived=False)
     if query:
@@ -660,6 +669,17 @@ def ocr_scan(request):
 
         try:
             result = extract_cnib_info(tmp_path)
+            
+            # Vérifier si le visiteur existe déjà
+            if result.get('numero_cni'):
+                visiteur = Visiteur.objects.filter(numero_cni=result['numero_cni'], is_archived=False).first()
+                if visiteur:
+                    result['already_exists'] = True
+                    result['visiteur_id'] = visiteur.id
+                    result['redirect_url'] = reverse('visite_create') + f"?visiteur_id={visiteur.id}"
+                else:
+                    result['already_exists'] = False
+            
             return JsonResponse({'success': True, 'data': result})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
