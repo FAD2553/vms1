@@ -3,234 +3,242 @@
 
 {% block content_noauth %}
 {% load static %}
-<div class="login-wrapper">
-    <!-- Split Background Layout (Clean Blue Left) -->
-    <div class="split-left"></div>
-    <div class="split-right"></div>
+<div class="login-page">
+    <div class="login-container">
+        <!-- Circular User Icon sitting on top of the card -->
+        <div class="user-avatar-container">
+            <div class="user-avatar shadow-lg">
+                <i class="bi bi-person-fill"></i>
+            </div>
+        </div>
 
-    <!-- Floating Login Card -->
-    <div class="login-card-container">
-        <div class="login-card border-0 shadow-2xl">
-            <div class="card-body p-4 p-md-5">
-                <!-- App Logo centered above title -->
-                <div class="text-center mb-4">
-                    <img src="{% static 'img/logo.png' %}" alt="UWAZY Logo" class="auth-logo-main">
-                </div>
-                
-                <div class="text-center mb-5">
-                    <h2 class="auth-title">CONNEXION</h2>
-                    <div class="title-underline"></div>
+        <div class="login-card shadow-2xl border-0">
+            <div class="card-body p-4 p-md-5 pt-5">
+                <div class="text-center mb-4 pt-3">
+                    <h2 class="login-title">Connexion</h2>
                 </div>
 
                 {% if messages %}
                 <div class="mb-4">
                     {% for message in messages %}
-                    <div class="alert alert-danger border-0 rounded-3 py-2 px-3 small d-flex align-items-center gap-2">
-                        <i class="bi bi-exclamation-circle-fill"></i>
+                    <div class="alert alert-danger border-0 rounded-4 py-3 px-4 small animate__animated animate__shakeX">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
                         <span>{{ message }}</span>
                     </div>
                     {% endfor %}
                 </div>
                 {% endif %}
 
-                <form method="post" class="auth-form">
+                <form method="post" class="login-form">
                     {% csrf_token %}
                     
-                    <div class="auth-input-group mb-5">
-                        <label class="auth-label">Identifiant</label>
-                        <div class="input-underline-wrapper">
-                            <input type="text" name="username" class="auth-control" required autofocus autocomplete="username">
-                            <i class="bi bi-envelope auth-icon"></i>
+                    <!-- User ID Input -->
+                    <div class="input-group-custom mb-4">
+                        <input type="text" name="username" class="form-control-custom" placeholder="nom d'utilisateur" required autofocus autocomplete="username">
+                        <div class="input-icon">
+                            <i class="bi bi-person"></i>
                         </div>
                     </div>
 
-                    <div class="auth-input-group mb-5">
-                        <label class="auth-label">Mot de passe</label>
-                        <div class="input-underline-wrapper">
-                            <input type="password" name="password" class="auth-control" required autocomplete="current-password">
-                            <i class="bi bi-lock auth-icon"></i>
+                    <!-- Password Input -->
+                    <div class="input-group-custom mb-4">
+                        <input type="password" name="password" class="form-control-custom" placeholder="mot de passe" required autocomplete="current-password">
+                        <div class="input-icon">
+                            <i class="bi bi-lock"></i>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-auth-primary w-100 mt-2">
-                        Se connecter
-                    </button>
+                    <!-- Login Button -->
+                    <div class="mt-4 mb-4">
+                        <button type="submit" class="btn btn-login w-100 shadow-sm">
+                            Se connecter
+                        </button>
+                    </div>
                     
-                    <div class="text-center mt-5">
-                        <small class="text-muted fw-bold extra-small text-uppercase letter-spacing-1">Sécurité Authentification UWAZY</small>
-                    </div>
+                    
                 </form>
+
+                <div class="text-center mt-5">
+                    <img src="{% static 'img/logo.png' %}" alt="UWAZY Logo" class="brand-footer-logo">
+                    <p class="mt-2 extra-small text-muted text-uppercase fw-bold opacity-50">Sécurisé par UWAZY VMS</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    /* Reset & Base */
-    html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
+    /* Base Styles */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    body {
+        background-color: #f3f4f6 !important;
+        font-family: 'Inter', sans-serif !important;
     }
 
-    .login-wrapper {
-        display: flex;
-        height: 100vh;
-        width: 100vw;
-        position: relative;
-        font-family: 'Inter', sans-serif;
-    }
-
-    /* Split Styles (Minimal) */
-    .split-left {
-        flex: 1;
-        background: #2563EB; 
-    }
-
-    .split-right {
-        flex: 1;
-        background: #FFFFFF;
-    }
-
-    /* Login Card */
-    .login-card-container {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+    .login-page {
+        min-height: 100vh;
         width: 100%;
-        max-width: 460px;
-        z-index: 100;
-        padding: 1.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
     }
 
+    .login-container {
+        width: 100%;
+        max-width: 440px;
+        position: relative;
+    }
+
+    /* Avatar Styling */
+    .user-avatar-container {
+        position: absolute;
+        top: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+    }
+
+    .user-avatar {
+        width: 120px;
+        height: 120px;
+        background-color: #2563EB;
+        border: 8px solid #f3f4f6;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3.5rem;
+    }
+
+    /* Card Styling */
     .login-card {
-        background: white;
-        border-radius: 28px;
-        overflow: hidden;
+        background-color: #ffffff;
+        border-radius: 12px; /* Subtle rounding match mockup */
+        width: 100%;
+        padding-top: 10px;
     }
 
     .shadow-2xl {
-        box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.15);
     }
 
-    .auth-logo-main {
-        height: 70px;
-        width: auto;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Auth Styling */
-    .auth-title {
-        font-weight: 800;
-        font-size: 1.6rem;
-        color: #1a1d23;
-        letter-spacing: 2px;
-        margin-bottom: 0.5rem;
-    }
-
-    .title-underline {
-        width: 35px;
-        height: 3px;
-        background: #2563EB;
-        margin: 0 auto;
-    }
-
-    .auth-label {
-        font-weight: 700;
-        color: #1a1d23;
-        margin-bottom: 8px;
-        display: block;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .input-underline-wrapper {
-        position: relative;
-        border-bottom: 1.5px solid #edf2f7;
-        transition: border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .input-underline-wrapper:focus-within {
-        border-color: #2563EB;
-    }
-
-    .auth-control {
-        width: 100%;
-        border: none;
-        padding: 12px 35px 12px 0;
-        font-size: 1rem;
-        color: #1a202c;
-        background: transparent;
+    .login-title {
+        color: #4b5563;
         font-weight: 500;
+        font-size: 1.4rem;
+        letter-spacing: -0.5px;
     }
 
-    .auth-control:focus {
+    /* Input Field Styling */
+    .input-group-custom {
+        position: relative;
+        width: 100%;
+    }
+
+    .form-control-custom {
+        width: 100%;
+        padding: 16px 20px 16px 45px;
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        color: #374151;
+        transition: all 0.2s ease;
+    }
+
+    .form-control-custom:focus {
         outline: none;
+        background-color: #ffffff;
+        border-color: #2563EB;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
     }
 
-    .auth-icon {
+    .input-icon {
         position: absolute;
-        right: 0;
+        left: 18px;
         top: 50%;
         transform: translateY(-50%);
-        color: #cbd5e0;
-        transition: color 0.3s;
+        color: #9ca3af;
+        font-size: 1.1rem;
     }
 
-    .input-underline-wrapper:focus-within .auth-icon {
+    .form-control-custom:focus + .input-icon {
         color: #2563EB;
     }
 
-    /* Button */
-    .btn-auth-primary {
-        background: #2563EB;
+    /* Button Styling */
+    .btn-login {
+        background-color: #2563EB;
         color: white;
+        padding: 14px;
         border: none;
-        padding: 16px;
-        border-radius: 50px;
-        font-weight: 800;
-        font-size: 1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 0.5px;
+        transition: all 0.2s ease;
     }
 
-    .btn-auth-primary:hover {
-        background: #000;
-        transform: translateY(-3px);
-        box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.25);
+    .btn-login:hover {
+        background-color: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
         color: white;
     }
 
-    .extra-small { font-size: 0.65rem; }
-    .letter-spacing-1 { letter-spacing: 1px; }
+    .btn-login:active {
+        transform: translateY(0);
+    }
 
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .split-left {
-            display: none;
+    /* Footer & Links */
+    .forgot-link {
+        color: #9ca3af;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .forgot-link:hover {
+        color: #2563EB;
+    }
+
+    .brand-footer-logo {
+        height: 35px;
+        width: auto;
+        filter: grayscale(1) opacity(0.5);
+    }
+
+    .extra-small {
+        font-size: 0.65rem;
+        letter-spacing: 1px;
+    }
+
+    /* Animations */
+    .animate__shakeX {
+        animation: shakeX 0.8s;
+    }
+
+    @keyframes shakeX {
+        0%, 100% {transform: translateX(0);}
+        10%, 30%, 50%, 70%, 90% {transform: translateX(-5px);}
+        20%, 40%, 60%, 80% {transform: translateX(5px);}
+    }
+
+    /* Mobile Adjustments */
+    @media (max-width: 480px) {
+        .login-container {
+            max-width: 100%;
         }
-        .split-right {
-            background: #2563EB;
-            flex: 1;
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            font-size: 3rem;
+            top: -50px;
         }
-        .login-card-container {
-            position: relative;
-            top: 0;
-            left: 0;
-            transform: none;
-            padding: 2.5rem 1.5rem;
-            display: flex;
-            align-items: center;
-            height: 100vh;
-        }
-        .login-card {
-            border-radius: 24px;
-            width: 100%;
+        .card-body {
+            padding: 2rem 1.5rem !important;
         }
     }
 </style>
