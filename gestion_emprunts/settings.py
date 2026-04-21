@@ -57,7 +57,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'gestion_emprunts.wsgi.application'
 
-# Database - PostgreSQL for production
+# Database - PostgreSQL
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

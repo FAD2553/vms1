@@ -66,13 +66,14 @@ class Visiteur(models.Model):
     date_naissance = models.DateField(verbose_name="Date de naissance")
     sexe = models.CharField(max_length=10, choices=[('M', 'Masculin'), ('F', 'Féminin')], blank=True, null=True, verbose_name="Sexe")
     profession = models.CharField(max_length=100, blank=True, null=True, verbose_name="Profession")
-    telephone = models.CharField(max_length=20, verbose_name="Téléphone")
+    telephone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Téléphone")
     adresse = models.TextField(verbose_name="Adresse", blank=True, null=True)
     scan_cni_recto = models.ImageField(
         upload_to='cni_scans/',
         storage=private_storage,
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])],
-        verbose_name="Scan CNIB Recto"
+        verbose_name="Scan CNIB Recto",
+        blank=True, null=True
     )
     scan_cni_verso = models.ImageField(
         upload_to='cni_scans/',

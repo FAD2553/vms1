@@ -96,6 +96,11 @@ class VisiteForm(forms.ModelForm):
         self.fields['heure_entree'].initial = timezone.now().strftime('%Y-%m-%dT%H:%M')
         self.fields['heure_entree'].input_formats = ['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M']
         
+        # Définir le service par défaut sur 'Secrétariat' si disponible
+        secretariat = Service.objects.filter(nom__iexact='Secrétariat').first()
+        if secretariat:
+            self.fields['service_visite'].initial = secretariat
+        
         # Gestion du champ porte selon le rôle
         if user and not user.is_superuser:
             # Pour un agent, on cache le champ car c'est automatique

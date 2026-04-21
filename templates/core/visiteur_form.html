@@ -75,25 +75,25 @@
                     </div>
                     
                     <div class="col-md-6">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Profession</label>
+                        <label class="form-label fw-bold small text-muted text-uppercase">Profession <span class="text-lowercase fw-normal">(Optionnel)</span></label>
                         {{ form.profession }}
                         {% if form.profession.errors %}<div class="text-danger extra-small mt-1">{{ form.profession.errors.0 }}</div>{% endif %}
                     </div>
                     
                     <div class="col-md-6">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Téléphone</label>
+                        <label class="form-label fw-bold small text-muted text-uppercase">Téléphone <span class="text-lowercase fw-normal">(Optionnel)</span></label>
                         {{ form.telephone }}
                         {% if form.telephone.errors %}<div class="text-danger extra-small mt-1">{{ form.telephone.errors.0 }}</div>{% endif %}
                     </div>
                     
                     <div class="col-12">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Adresse</label>
+                        <label class="form-label fw-bold small text-muted text-uppercase">Adresse <span class="text-lowercase fw-normal">(Optionnel)</span></label>
                         {{ form.adresse }}
                         {% if form.adresse.errors %}<div class="text-danger extra-small mt-1">{{ form.adresse.errors.0 }}</div>{% endif %}
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold small text-muted text-uppercase">CNIB Recto</label>
+                        <label class="form-label fw-bold small text-muted text-uppercase">CNIB Recto <span class="text-lowercase fw-normal">(Optionnel)</span></label>
                         <div class="input-group">
                             {{ form.scan_cni_recto }}
                             <button type="button" class="btn btn-outline-primary camera-field-trigger" data-camera-target="id_scan_cni_recto">
@@ -104,7 +104,7 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold small text-muted text-uppercase">CNIB Verso</label>
+                        <label class="form-label fw-bold small text-muted text-uppercase">CNIB Verso <span class="text-lowercase fw-normal">(Optionnel)</span></label>
                         <div class="input-group">
                             {{ form.scan_cni_verso }}
                             <button type="button" class="btn btn-outline-primary camera-field-trigger" data-camera-target="id_scan_cni_verso">
