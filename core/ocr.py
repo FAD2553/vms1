@@ -4,9 +4,21 @@ try:
     from PIL import Image, ImageOps
     import pytesseract
     # Set Tesseract path on Windows
-    tesseract_path = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-    if os.path.exists(tesseract_path):
-        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+    possible_paths = [
+        r'C:\Program Files\Tesseract-OCR\tesseract.exe',
+        r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
+        r'C:\Users\ousmanek\AppData\Local\Tesseract-OCR\tesseract.exe'
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            pytesseract.pytesseract.tesseract_cmd = path
+            break
+    
+    # Set TESSDATA_PREFIX if local tessdata exists
+    local_tessdata = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tessdata')
+    if os.path.exists(local_tessdata):
+        os.environ['TESSDATA_PREFIX'] = local_tessdata
+    
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
@@ -15,6 +27,7 @@ except ImportError:
 def _get_ocr_lang():
     """Return 'fra' if available, else 'eng'."""
     try:
+        # Use config to specify tessdata if needed, but TESSDATA_PREFIX usually covers it
         langs = pytesseract.get_languages()
         return 'fra' if 'fra' in langs else 'eng'
     except Exception:

@@ -13,7 +13,7 @@ Le niveau technique ciblé pour ce document est **intermédiaire**. Nous avons p
 ### 1.1 Présentation du projet
 Le projet consiste à concevoir une application web robuste permettant de digitaliser et sécuriser l'accueil des visiteurs au sein d'une organisation (exemple : administration publique au Burkina Faso). L'objectif est de remplacer les registres papiers obsolètes par un système numérique capable de :
 - Identifier les visiteurs par scan de CNIB via reconnaissance optique de caractères (OCR).
-- Gérer les entrées et sorties en temps réel par porte d'accès.
+- Gérer précisément les flux : le système permet d'entrer par une porte A et de ressortir par une porte B, avec un suivi en temps réel de qui est "sur place".
 - Générer des rapports statistiques et des journaux d'audit sécurisés.
 
 ### 1.2 Contraintes spécifiques et limites
@@ -60,8 +60,8 @@ Nous détaillons ici les raisons ayant motivé le choix définitif de notre stac
 ### 3.1 Backend : Django 6.0.3 et Python 3.12
 Nous avons choisi **Django** comme framework principal pour trois raisons critiques :
 1. **La Sécurité :** Django protège nativement contre les injections SQL, les attaques CSRF (Cross-Site Request Forgery) et le cross-site scripting (XSS).
-2. **L'Administration :** L'interface d'administration automatique nous a permis de gagner un temps précieux pour la gestion des tables de référence (Services, Portes, Logs).
-3. **L'Écosystème Python :** L'intégration directe avec des puissantes bibliothèques d'imagerie (Pillow) et d'OCR (pytesseract) était indispensable pour notre fonctionnalité phare de scan CNIB.
+2. **L'Administration :** L'interface d'administration automatique nous a permis de gérer facilement les **Portes** (points d'accès), les **Services** (bureaux de destination) et les **Logs** (historique de qui a fait quoi).
+3. **La Gestion des Flux :** Le système traite désormais l'Entrée et la Sortie comme deux événements distincts liés à des portes différentes, offrant une flexibilité totale pour les grands bâtiments.
 
 ### 3.2 Base de Données : PostgreSQL 16
 Bien que MySQL soit très commun, nous avons privilégié **PostgreSQL** pour sa capacité à gérer de gros volumes de logs d'audit sans perte de performance. L'utilisation de l'**ORM Django** garantit que notre code reste agnostique (nous n'écrivons pas de SQL brut), ce qui facilite une future migration ou évolution.

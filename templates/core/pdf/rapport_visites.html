@@ -41,7 +41,10 @@
                     <strong>{{ v.visiteur.prenom }} {{ v.visiteur.nom }}</strong><br>
                     <small>{{ v.visiteur.numero_cni }}</small>
                 </td>
-                <td style="padding: 6px; text-align: center; border: 1px solid #eee; font-weight: bold;">{{ v.porte.numero }}</td>
+                <td style="padding: 6px; text-align: center; border: 1px solid #eee; font-weight: bold;">
+                    E:{{ v.porte_entree.numero }}
+                    {% if v.porte_sortie %}<br>S:{{ v.porte_sortie.numero }}{% endif %}
+                </td>
                 <td style="padding: 6px; border: 1px solid #eee;">{{ v.service_visite.nom }}</td>
                 <td style="padding: 6px; border: 1px solid #eee;">{{ v.agent_entree.username|default:"---" }}</td>
                 <td style="padding: 6px; border: 1px solid #eee;">{{ v.agent_sortie.username|default:"---" }}</td>

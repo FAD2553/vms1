@@ -11,9 +11,8 @@ def report_context(request):
         if not request.user.is_superuser:
             try:
                 porte = request.user.profile.porte_actuelle
-                if porte:
-                    long_visites_query = long_visites_query.filter(porte=porte)
-                else:
+                if not porte:
+                    # Si l'agent n'a pas de porte, il ne reçoit pas d'alertes
                     long_visites_query = Visite.objects.none()
             except AgentProfile.DoesNotExist:
                 long_visites_query = Visite.objects.none()

@@ -78,7 +78,7 @@ graph TB
 Notre système suit l’architecture **MVT (Model – View – Template)**, variante du modèle MVC, spécialement adaptée au framework Django pour séparer les responsabilités.
 
 ### 2.1 Model (Modèle)
-Le modèle représente la structure des données et les relations (ex: Visiteur - Visite). Il définit les contraintes et l’intégrité des informations stockées en base de données.
+Le modèle représente la structure des données et les relations. Par exemple, une **Visite** contient désormais une **Porte d'entrée** et une **Porte de sortie** distinctes, permettant de suivre précisément le trajet du visiteur dans l'établissement. Il définit les contraintes et l’intégrité des informations stockées en base de données.
 
 ### 2.2 View (Vue)
 La vue agit comme le **cerveau du système**. Elle traite les demandes de l’utilisateur (scan CNIB, calcul de présence, génération de rapport), applique les règles métier et renvoie la réponse appropriée.
@@ -142,14 +142,30 @@ Toutes les saisies passent par les formulaires Django, protégeant contre les in
 
 ### 5.3 Gestion des rôles
 Le système sépare strictement les droits :
-*   **Agent de porte :** Limité aux opérations courantes de sa porte d'affectation.
-*   **Administrateur :** Gestion globale, accès aux statistiques sensibles et rapports PDF.
+*   **Agent de porte :** Responsable de l'enregistrement des entrées à sa porte et des sorties (même si le visiteur est entré par une autre porte). Accès restreint à la gestion opérationnelle.
+*   **Administrateur :** Gestion globale (utilisateurs, portes, services), accès aux statistiques sensibles de l'ensemble de l'établissement et génération de rapports PDF consolidés.
 
 ---
 
 # 6. Justification de la robustesse
 
 La stabilité du système est garantie par l’utilisation de **transactions atomiques** via l'ORM Django. Chaque opération (ex: enregistrer une visite) est soit complétée à 100%, soit totalement annulée en cas d'erreur technique ou de coupure de courant, évitant ainsi toute incohérence dans la base PostgreSQL.
+
+---
+
+# 7. Documentation détaillée des modules
+
+Pour une compréhension approfondie de chaque composant technique, des documents spécifiques détaillent le fonctionnement interne de chaque module :
+
+*   **[Module OCR](file:///c:/Users/ousmanek/Desktop/STAGE/vms1/Detail_Module_OCR_VMS.md) :** Détail du pipeline de traitement d'image et de la reconnaissance de caractères.
+*   **[Module Gestion des Flux](file:///c:/Users/ousmanek/Desktop/STAGE/vms1/Detail_Module_Flux_VMS.md) :** Logique de suivi des entrées/sorties et gestion multi-portes.
+*   **[Module Sécurité & Traçabilité](file:///c:/Users/ousmanek/Desktop/STAGE/vms1/Detail_Module_Securite_VMS.md) :** Mécanismes d'audit, logs et protection des données sensibles.
+*   **[Module Statistiques & Reporting](file:///c:/Users/ousmanek/Desktop/STAGE/vms1/Detail_Module_Stats_VMS.md) :** Fonctionnement du dashboard interactif et indicateurs de performance.
+*   **[Module Génération PDF](file:///c:/Users/ousmanek/Desktop/STAGE/vms1/Detail_Module_PDF_VMS.md) :** Moteur d'édition de documents (Rapports, Journaux, Badges).
+*   **[Module Administration](file:///c:/Users/ousmanek/Desktop/STAGE/vms1/Detail_Module_Admin_VMS.md) :** Gestion des utilisateurs, des services et configuration du système.
+*   **[Module Stockage Sécurisé](file:///c:/Users/ousmanek/Desktop/STAGE/vms1/Detail_Module_Stockage_VMS.md) :** Gestion des fichiers privés et stratégie de stockage des documents d'identité.
+*   **[Module Services & Destinations](file:///c:/Users/ousmanek/Desktop/STAGE/vms1/Detail_Module_Services_VMS.md) :** Cartographie de l'organisation interne et orientation des visiteurs.
+*   **[Module Archivage & Conformité](file:///c:/Users/ousmanek/Desktop/STAGE/vms1/Detail_Module_Archivage_VMS.md) :** Stratégie de rétention des données et coffre-fort JSON.
 
 ---
 

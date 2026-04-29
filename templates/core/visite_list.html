@@ -76,7 +76,10 @@
                     </td>
                     {% if user.is_superuser %}
                     <td>
-                        <span class="badge bg-primary px-3 rounded-pill">P{{ v.porte.numero }}</span>
+                        <span class="badge bg-primary px-3 rounded-pill">E: {{ v.porte_entree.numero }}</span>
+                        {% if v.porte_sortie %}
+                        <span class="badge bg-dark px-3 rounded-pill">S: {{ v.porte_sortie.numero }}</span>
+                        {% endif %}
                     </td>
                     {% endif %}
                     <td>

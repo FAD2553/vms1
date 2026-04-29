@@ -30,8 +30,10 @@ Journalise chaque entrée et sortie d'un visiteur.
 | `id` | BigInt | PK, Auto-increment | Identifiant de la session. |
 | `visiteur_id` | ForeignKey | FK -> Visiteur | Référence au visiteur. |
 | `service_id` | ForeignKey | FK -> Service | Service de destination. |
-| `porte_id` | ForeignKey | FK -> Porte | Porte de passage. |
+| `porte_entree_id` | ForeignKey | FK -> Porte | Porte par laquelle le visiteur est entré. |
+| `porte_sortie_id` | ForeignKey | FK -> Porte | Porte par laquelle le visiteur est sorti (Nullable). |
 | `agent_entree_id`| ForeignKey | FK -> User | Agent ayant validé l'entrée. |
+| `agent_sortie_id`| ForeignKey | FK -> User | Agent ayant validé la sortie (Nullable). |
 | `heure_entree` | DateTime | Default Now | Horodatage d'arrivée. |
 | `heure_sortie` | DateTime | Nullable | Horodatage de départ. |
 | `statut` | Char(15) | Choice (PRESENT/SORTI) | État actuel du visiteur. |

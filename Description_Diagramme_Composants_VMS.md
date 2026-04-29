@@ -8,12 +8,12 @@ Ce document fournit une explication approfondie des différents composants logic
 
 Le système repose sur une architecture multicouche où chaque composant a une responsabilité spécifique, de l'interaction utilisateur au stockage persistant des données.
 
-### 1.1 Couche de Présentation (Interface Utilisateur)
-C'est le point d'entrée pour les agents et les administrateurs.
+### 1.1 Couche de Présentation (Le "Frontend")
+C'est tout ce que l'utilisateur voit à l'écran : les boutons, les couleurs, les formulaires.
 
-*   **Templates HTML & Bootstrap 5 :** Fournissent une interface web moderne, responsive et intuitive. Bootstrap est utilisé pour garantir que l'application est utilisable sur différents terminaux (PC, tablettes).
-*   **Composant Chart.js :** Utilisé exclusivement dans le tableau de bord (Dashboard) pour transformer les données brutes de visites en statistiques visuelles (graphiques de fréquentation, pics d'affluence).
-*   **Scripts JavaScript / jQuery :** Gèrent l'interactivité côté client. Notamment crucial pour l'envoi asynchrone (AJAX) des photos de CNIB au serveur sans recharger la page, améliorant ainsi la fluidité du processus d'accueil.
+*   **Qu'est-ce que le Frontend ?** C'est le visage du site. Comme la carrosserie d'une voiture.
+*   **Templates & Bootstrap :** Ils servent à ce que le site soit beau et facile à utiliser, même sur un téléphone portable.
+*   **JavaScript (Interactivité) :** C'est ce qui permet au site de réagir sans recharger la page (par exemple, quand on scanne une carte, les données apparaissent tout de suite).
 
 ### 1.2 Couche Application (Cœur Django)
 Le framework Django sert de chef d'orchestre pour toute la logique métier.
@@ -35,11 +35,12 @@ Composants de bas niveau nécessaires au fonctionnement des modules spécialisé
 *   **Moteur Tesseract OCR :** Le moteur de reconnaissance optique de caractères installé sur le serveur. Il est invoqué par le module Python pour effectuer le travail de reconnaissance intensif.
 *   **Système de Fichiers (Private Media) :** Un stockage sécurisé hors de la racine web publique (`PRIVATE_MEDIA_ROOT`). Il conserve les scans originaux des CNIB. L'accès à ces fichiers est strictement contrôlé par Django pour protéger la vie privée des visiteurs.
 
-### 1.5 Couche de Persistance
-La fondation où toutes les données sont stockées de manière permanente.
+### 1.5 Couche de Persistance (La "Base de Données")
+C'est le cerveau qui se souvient de tout.
 
-*   **Django ORM (Object-Relational Mapper) :** Sert d'interface entre le code Python et la base de données. Il permet de manipuler les données comme des objets Python, garantissant la sécurité contre les injections SQL.
-*   **Base de Données PostgreSQL 16 :** Système de gestion de base de données relationnelle puissant qui stocke les profils des visiteurs, l'historique des visites, les logs de sécurité et les configurations du système.
+*   **Qu'est-ce qu'une Base de Données ?** C'est une armoire numérique géante où chaque information est rangée dans un tiroir précis.
+*   **PostgreSQL :** C'est le modèle de l'armoire. Elle est très solide et ne perd jamais rien, même s'il y a une coupure de courant.
+*   **L'ORM :** C'est le "robot rangeur". C'est lui qui prend les informations que l'agent a tapées et qui va les ranger au bon endroit dans l'armoire sans faire d'erreur.
 
 ---
 

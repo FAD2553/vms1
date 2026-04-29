@@ -14,7 +14,7 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Visite)
 class VisiteAdmin(admin.ModelAdmin):
-    list_display = ('visiteur', 'service_visite', 'date_visite', 'heure_entree', 'heure_sortie', 'statut')
+    list_display = ('visiteur', 'service_visite', 'porte_entree', 'porte_sortie', 'date_visite', 'heure_entree', 'heure_sortie', 'statut')
     list_filter = ('statut', 'date_visite', 'service_visite')
     search_fields = ('visiteur__nom', 'visiteur__prenom', 'motif')
 

@@ -4,9 +4,9 @@ Ce document décrit l'infrastructure réseau nécessaire et mise en œuvre pour 
 
 ---
 
-## 1. Topologie du Réseau (Intranet)
+Le système est conçu pour fonctionner dans un réseau local (**LAN**), garantissant que les données sensibles ne quittent jamais le bâtiment.
 
-Le système est conçu pour fonctionner dans un réseau local (LAN), garantissant que les données sensibles ne quittent jamais le périmètre physique de l'organisation.
+*   **Qu'est-ce qu'un LAN (Réseau Local) ?** Imaginez que tous les ordinateurs de votre bureau sont reliés par des câbles invisibles ou du Wi-Fi pour se parler entre eux, mais sans sortir sur Internet. C'est comme un circuit fermé.
 
 ### Diagramme de Topologie
 ```mermaid
@@ -34,12 +34,9 @@ graph LR
 
 ---
 
-## 2. Configuration du Serveur Local
-
-Le serveur central héberge à la fois l'application Django et la base de données PostgreSQL.
-
-*   **Adresse IP Statique :** Le serveur doit posséder une IP fixe (ex: `192.168.1.10`) pour permettre aux clients d'accéder à l'application sans interruption.
-*   **Système d'Exploitation :** Windows ou Linux (Ubuntu recommandant pour la stabilité).
+*   **Adresse IP Statique :** C'est comme l'adresse postale du serveur. Elle ne doit jamais changer (exemple: `192.168.1.10`) pour que tous les ordinateurs des agents sachent toujours où le trouver.
+*   **Système d'Exploitation :** C'est le moteur de l'ordinateur (souvent Windows ou Linux).
+*   **Le Serveur Central :** C'est l'ordinateur principal, le "Cœur", qui contient toute l'application et la mémoire de l'établissement.
 *   **Ports Ouverts :**
     *   `80` / `443` : Accès Web (HTTP/HTTPS via Nginx ou Waitress).
     *   `5432` : (Interne) Port par défaut de PostgreSQL (accès limité au serveur lui-même).

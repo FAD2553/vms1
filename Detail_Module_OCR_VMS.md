@@ -1,6 +1,7 @@
-# Détail du Module Spécifique : Reconnaissance Optique de Caractères (OCR)
+Ce document explique comment le système **VMS (Uwazy)** lit automatiquement les informations sur les cartes d'identité (CNIB).
 
-Ce document approfondit le fonctionnement technique du module phare du système **VMS (Uwazy)** : l'extraction automatisée des données des Cartes Nationales d'Identité Burkinabè (CNIB).
+### Qu'est-ce que l'OCR ?
+L'**OCR** (Reconnaissance Optique de Caractères) est une technologie qui permet à un ordinateur de "lire" le texte écrit sur une image, exactement comme un humain le ferait, et de le transformer en texte modifiable sur un clavier.
 
 ---
 
@@ -18,7 +19,7 @@ L'OCR brut sur une photo de CNIB donne souvent de mauvais résultats (bruit, omb
 1.  **Réception :** L'image originale (souvent en couleur et haute résolution).
 2.  **Conversion en Niveaux de Gris :** Élimination des informations de couleur inutiles pour simplifier l'analyse.
 3.  **Redimensionnement (Scale x2) :** Augmentation de la résolution logicielle pour rendre les caractères plus nets.
-4.  **Seuillage (Thresholding / Binarisation) :** Transformation de l'image en noir et blanc pur. Les pixels gris deviennent soit noirs (texte), soit blancs (fond), ce qui isole parfaitement les caractères.
+4.  **Seuillage (Binarisation) :** C'est l'étape la plus magique. On transforme l'image en noir et blanc pur. Tout ce qui est gris clair devient blanc, et tout ce qui est gris foncé devient noir. Cela permet de détacher les lettres du fond de la carte pour que l'ordinateur ne soit pas perturbé par les dessins de sécurité de la CNIB.
 
 ---
 
@@ -33,10 +34,8 @@ Pour maximiser la précision, le module exécute deux types d'analyse :
 ### Passage 2 : Lecture Précise (Format CNIB)
 *   **Objectif :** Extraire le numéro unique de la CNIB sans erreur.
 *   **Technique :** Nous isolons la zone basse de la carte où se situe le numéro et appliquons une configuration Tesseract restrictive (uniquement caractères alphanumériques).
-*   **Validation Regex :** Le texte extrait est passé au filtre d'une expression régulière stricte :
-    ```python
-    regex_cni = r"B[0-9]{8}"  # Recherche un 'B' suivi exactement de 8 chiffres
-    ```
+*   **Validation Regex :** Le système utilise une règle appelée **Regex** (une sorte de filtre intelligent) pour s'assurer que le numéro trouvé ressemble bien à un numéro de CNIB (un 'B' suivi de 8 chiffres).
+    *   *Exemple :* Si l'ordinateur lit "B12345678", le Regex dit "C'est bon !". S'il lit "Bonjour", le Regex dit "C'est faux !".
 
 ---
 

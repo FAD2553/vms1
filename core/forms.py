@@ -76,11 +76,11 @@ class PorteForm(forms.ModelForm):
 class VisiteForm(forms.ModelForm):
     class Meta:
         model = Visite
-        fields = ['visiteur', 'service_visite', 'porte', 'motif', 'heure_entree', 'observations']
+        fields = ['visiteur', 'service_visite', 'porte_entree', 'motif', 'heure_entree', 'observations']
         widgets = {
             'visiteur': forms.Select(attrs={'class': 'form-select select2'}),
             'service_visite': forms.Select(attrs={'class': 'form-select select2'}),
-            'porte': forms.Select(attrs={'class': 'form-select select2'}),
+            'porte_entree': forms.Select(attrs={'class': 'form-select select2'}),
             'motif': forms.TextInput(attrs={'class': 'form-control'}),
             'heure_entree': forms.DateTimeInput(
                 attrs={'class': 'form-control', 'type': 'datetime-local'},
@@ -101,15 +101,15 @@ class VisiteForm(forms.ModelForm):
         if secretariat:
             self.fields['service_visite'].initial = secretariat
         
-        # Gestion du champ porte selon le rôle
+        # Gestion du champ porte_entree selon le rôle
         if user and not user.is_superuser:
             # Pour un agent, on cache le champ car c'est automatique
-            self.fields['porte'].required = False
-            self.fields['porte'].widget = forms.HiddenInput()
+            self.fields['porte_entree'].required = False
+            self.fields['porte_entree'].widget = forms.HiddenInput()
         else:
-            self.fields['porte'].required = True
-            self.fields['porte'].label = "Porte d'accès"
-            self.fields['porte'].queryset = Porte.objects.all().order_by('numero')
+            self.fields['porte_entree'].required = True
+            self.fields['porte_entree'].label = "Porte d'entrée"
+            self.fields['porte_entree'].queryset = Porte.objects.all().order_by('numero')
 
 
 class RapportVisiteForm(forms.Form):

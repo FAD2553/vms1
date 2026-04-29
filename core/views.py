@@ -71,18 +71,22 @@ def dashboard(request):
     if not request.user.is_superuser:
         try:
             porte_actuelle = request.user.profile.porte_actuelle
-            if porte_actuelle:
-                visites_base = visites_base.filter(porte=porte_actuelle)
-            else:
-                # Si l'agent n'a pas de porte assignée, il ne voit rien par sécurité
-                visites_base = Visite.objects.none()
+            if not porte_actuelle:
+                # Si l'agent n'a pas de porte assignée, il ne voit que les présents par sécurité
+                visites_base = Visite.objects.filter(statut='PRESENT')
         except AgentProfile.DoesNotExist:
-            visites_base = Visite.objects.none()
+            visites_base = Visite.objects.filter(statut='PRESENT')
     
     # 1. Stats de base
     total_visiteurs = Visiteur.objects.filter(is_archived=False).count()
-    visiteurs_presents = visites_base.filter(statut='PRESENT').count()
-    visites_aujourdhui = visites_base.filter(date_visite=today).count()
+    visiteurs_presents = Visite.objects.filter(statut='PRESENT').count()
+    if porte_actuelle:
+        visites_aujourdhui = Visite.objects.filter(
+            Q(porte_entree=porte_actuelle) | Q(porte_sortie=porte_actuelle),
+            date_visite=today
+        ).count()
+    else:
+        visites_aujourdhui = Visite.objects.filter(date_visite=today).count() if request.user.is_superuser else 0
     total_services = Service.objects.count()
     total_portes = Porte.objects.count()
     
@@ -231,7 +235,7 @@ def visiteur_detail(request, pk):
         messages.error(request, "Ce visiteur a été archivé.")
         return redirect('visiteur_list')
         
-    visites = visiteur.visites.select_related('service_visite', 'porte').order_by('-heure_entree')
+    visites = visiteur.visites.select_related('service_visite', 'porte_entree', 'porte_sortie').order_by('-heure_entree')
     
     # Stats temps réel
     total_visites = visites.count()
@@ -381,7 +385,7 @@ def porte_detail(request, pk):
         messages.error(request, "Accès réservé à l'administrateur.")
         return redirect('dashboard')
     porte = get_object_or_404(Porte, pk=pk)
-    visites = porte.visites.select_related('visiteur', 'service_visite', 'agent_entree').order_by('-heure_entree')
+    visites = Visite.objects.filter(Q(porte_entree=porte) | Q(porte_sortie=porte)).select_related('visiteur', 'service_visite', 'agent_entree').order_by('-heure_entree')
     
     total_visites = visites.count()
     presents = visites.filter(statut='PRESENT').count()
@@ -408,22 +412,30 @@ def porte_detail(request, pk):
 @login_required
 def visite_list(request):
     statut_filter = request.GET.get('statut', '')
+    service_filter = request.GET.get('service', '')
+    porte_filter = request.GET.get('porte', '')
     query = request.GET.get('q', '')
-    visites = Visite.objects.select_related('visiteur', 'service_visite', 'agent_entree', 'porte')
-
-    # Filtrage par porte actuelle de l'agent
+    visites = Visite.objects.select_related('visiteur', 'service_visite', 'agent_entree', 'porte_entree', 'porte_sortie')
+    
+    # Les agents peuvent désormais voir toutes les visites (historique global)
+    # pour faciliter le suivi des visiteurs entre les différentes portes.
     if not request.user.is_superuser:
         try:
             porte = request.user.profile.porte_actuelle
-            if porte:
-                visites = visites.filter(porte=porte)
-            else:
-                visites = Visite.objects.none()
+            if not porte:
+                # Si l'agent n'est pas encore affecté, on peut restreindre aux présents
+                # ou lui donner accès s'il est considéré comme personnel de sécurité.
+                # Ici on lui permet de voir les présents au minimum.
+                visites = visites.filter(statut='PRESENT')
         except AgentProfile.DoesNotExist:
-            visites = Visite.objects.none()
+            visites = visites.filter(statut='PRESENT')
 
     if statut_filter:
         visites = visites.filter(statut=statut_filter)
+    if service_filter:
+        visites = visites.filter(service_visite_id=service_filter)
+    if porte_filter:
+        visites = visites.filter(Q(porte_entree_id=porte_filter) | Q(porte_sortie_id=porte_filter))
     if query:
         visites = visites.filter(
             Q(visiteur__nom__icontains=query) |
@@ -431,8 +443,10 @@ def visite_list(request):
             Q(service_visite__nom__icontains=query)
         )
     return render(request, 'core/visite_list.html', {
-        'visites': visites,
+        'visites': visites.order_by('-heure_entree'),
         'statut_filter': statut_filter,
+        'service_filter': service_filter,
+        'porte_filter': porte_filter,
         'query': query,
     })
 
@@ -464,12 +478,12 @@ def visite_create(request):
                     if not porte:
                         messages.error(request, "Opération impossible : Vous n'êtes affecté à aucune porte. Contactez l'administrateur.")
                         return redirect('dashboard')
-                    visite.porte = porte
+                    visite.porte_entree = porte
                 except AgentProfile.DoesNotExist:
                     messages.error(request, "Profil agent introuvable.")
                     return redirect('dashboard')
             else:
-                porte = visite.porte
+                porte = visite.porte_entree
                 if not porte:
                     messages.error(request, "Veuillez sélectionner une porte.")
                     return render(request, 'core/visite_form.html', {'form': form, 'title': 'Nouvelle Visite'})
@@ -505,16 +519,20 @@ def visite_create(request):
 
 @login_required
 def visite_detail(request, pk):
-    visite = get_object_or_404(Visite.objects.select_related('visiteur', 'service_visite', 'agent_entree', 'agent_sortie', 'porte'), pk=pk)
+    visite = get_object_or_404(Visite.objects.select_related('visiteur', 'service_visite', 'agent_entree', 'agent_sortie', 'porte_entree', 'porte_sortie'), pk=pk)
     
-    # Un agent ne voit que les visites de sa porte
+    # Les agents peuvent consulter les détails de n'importe quelle visite
+    # pour assurer la cohérence avec l'accès global au journal.
     if not request.user.is_superuser:
         try:
-            if visite.porte != request.user.profile.porte_actuelle:
-                messages.error(request, "Accès refusé.")
-                return redirect('visite_list')
+            if not request.user.profile.porte_actuelle:
+                # Si l'agent n'a pas de porte, il ne voit que les présents
+                if visite.statut != 'PRESENT':
+                    messages.error(request, "Accès restreint aux visites en cours.")
+                    return redirect('visite_list')
         except AgentProfile.DoesNotExist:
-            return redirect('visite_list')
+            if visite.statut != 'PRESENT':
+                return redirect('visite_list')
             
     return render(request, 'core/visite_detail.html', {'visite': visite})
 
@@ -523,10 +541,11 @@ def visite_detail(request, pk):
 def visite_sortie(request, pk):
     visite = get_object_or_404(Visite, pk=pk, statut='PRESENT')
     
+    # On vérifie juste que l'agent a une porte
     if not request.user.is_superuser:
         try:
-            if visite.porte != request.user.profile.porte_actuelle:
-                messages.error(request, "Accès refusé.")
+            if not request.user.profile.porte_actuelle:
+                messages.error(request, "Vous devez être affecté à une porte pour enregistrer une sortie.")
                 return redirect('visite_list')
         except AgentProfile.DoesNotExist:
             return redirect('visite_list')
@@ -535,8 +554,11 @@ def visite_sortie(request, pk):
         visite.heure_sortie = timezone.now()
         visite.statut = 'SORTI'
         visite.agent_sortie = request.user
+        if not request.user.is_superuser:
+            visite.porte_sortie = request.user.profile.porte_actuelle
         visite.save()
-        log_action(request.user, 'SORTIE_VISITE', f"Sortie de {visite.visiteur}", visite.id)
+        p_sort = visite.porte_sortie.numero if visite.porte_sortie else "admin"
+        log_action(request.user, 'SORTIE_VISITE', f"Sortie de {visite.visiteur} par la Porte {p_sort}", visite.id)
         messages.success(request, f"Sortie enregistrée pour {visite.visiteur.prenom} {visite.visiteur.nom}.")
         return redirect('visite_list')
     return render(request, 'core/visite_sortie.html', {'visite': visite})
@@ -596,7 +618,7 @@ def service_detail(request, pk):
         messages.error(request, "Accès réservé à l'administrateur.")
         return redirect('dashboard')
     service = get_object_or_404(Service.objects.annotate(nb_visites=Count('visites')), pk=pk)
-    visites = service.visites.select_related('visiteur', 'porte').order_by('-heure_entree')
+    visites = service.visites.select_related('visiteur', 'porte_entree').order_by('-heure_entree')
     
     today = timezone.now().date()
     start_of_week = today - timedelta(days=today.weekday())
@@ -735,7 +757,7 @@ def _render_to_pdf(request, template_path, context, filename):
 @login_required
 def pdf_rapport_visites(request):
     form = RapportVisiteForm(request.GET)
-    visites = Visite.objects.all().select_related('visiteur', 'service_visite', 'porte', 'agent_entree')
+    visites = Visite.objects.all().select_related('visiteur', 'service_visite', 'porte_entree', 'porte_sortie', 'agent_entree')
     service_nom = "Tous les services"
     porte_nom = "Toutes les portes"
     visiteur_nom = "Tous les visiteurs"
@@ -754,7 +776,7 @@ def pdf_rapport_visites(request):
             visites = visites.filter(service_visite=service)
             service_nom = service.nom
         if porte:
-            visites = visites.filter(porte=porte)
+            visites = visites.filter(Q(porte_entree=porte) | Q(porte_sortie=porte))
             porte_nom = porte.numero
         if visiteur:
             visites = visites.filter(visiteur=visiteur)

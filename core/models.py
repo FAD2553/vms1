@@ -24,11 +24,17 @@ class Porte(models.Model):
 
     @property
     def total_visites(self):
-        return self.visites.count()
+        # On compte uniquement les entrées via cette porte
+        return self.visites_entrees.count()
+
+    @property
+    def total_sorties(self):
+        # On compte uniquement les sorties via cette porte
+        return self.visites_sorties.count()
 
     @property
     def presents_actuels(self):
-        return self.visites.filter(statut='PRESENT').count()
+        return self.visites_entrees.filter(statut='PRESENT').count()
 
 
 class AgentProfile(models.Model):
@@ -132,8 +138,11 @@ class Visite(models.Model):
     service_visite = models.ForeignKey(
         Service, on_delete=models.PROTECT, related_name='visites', verbose_name="Service visité"
     )
-    porte = models.ForeignKey(
-        Porte, on_delete=models.PROTECT, related_name='visites', verbose_name="Porte d'entrée/sortie"
+    porte_entree = models.ForeignKey(
+        Porte, on_delete=models.PROTECT, related_name='visites_entrees', verbose_name="Porte d'entrée", null=True, blank=True
+    )
+    porte_sortie = models.ForeignKey(
+        Porte, on_delete=models.PROTECT, null=True, blank=True, related_name='visites_sorties', verbose_name="Porte de sortie"
     )
     agent_entree = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, related_name='visites_entrees', verbose_name="Agent d'entrée"
@@ -156,7 +165,7 @@ class Visite(models.Model):
         verbose_name_plural = "Visites"
 
     def __str__(self):
-        return f"Visite de {self.visiteur} (Porte {self.porte.numero})"
+        return f"Visite de {self.visiteur} (Entrée: {self.porte_entree.numero})"
 
     @property
     def duree_visite(self):
