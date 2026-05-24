@@ -40,11 +40,11 @@ Pour faire fonctionner cette application sur votre PC sous Windows, vous devez i
    ```
 3. Exécutez la commande de clonage suivante :
    ```bash
-   git clone https://github.com/uwazy-bf-dev/stage-wms.git
+   git clone https://github.com/FAD2553/vms1
    ```
 4. Accédez au dossier du projet nouvellement créé :
    ```bash
-   cd stage-wms
+   cd vms1
    ```
 
 ### Option B : Téléchargement du fichier ZIP
