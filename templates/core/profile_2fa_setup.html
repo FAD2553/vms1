@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Sécurité Double Facteur (2FA) | UWAZY{% endblock %}
+{% block page_title %}Sécurité Double Facteur (2FA){% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card shadow border-0 rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-white border-0 py-3 d-flex align-items-center gap-2">
+                <i class="bi bi-shield-check text-primary fs-3"></i>
+                <h5 class="mb-0 fw-bold text-secondary">Authentification à Double Facteur (2FA)</h5>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                {% if enabled %}
+                <!-- État : 2FA déjà activé -->
+                <div class="text-center py-4">
+                    <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4 pulse-success-icon" style="width: 90px; height: 90px;">
+                        <i class="bi bi-shield-fill-check fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold text-success mb-3">Votre compte est sécurisé !</h4>
+                    <p class="text-muted mx-auto" style="max-width: 500px;">
+                        L'authentification à double facteur (2FA) avec Google Authenticator est actuellement **activée** sur votre compte.
+                        Chaque tentative de connexion nécessitera la saisie de vos identifiants classiques ainsi qu'un code temporaire unique généré par votre smartphone.
+                    </p>
+                    
+                    <div class="mt-5 border-top pt-4">
+                        <h6 class="text-danger fw-bold mb-3 small"><i class="bi bi-exclamation-triangle-fill me-2"></i>DÉSACTIVATION DE LA SÉCURITÉ</h6>
+                        <p class="text-muted small">
+                            La désactivation du 2FA rendra votre compte vulnérable aux attaques de force brute ou aux fuites de mots de passe.
+                        </p>
+                        <button type="button" class="btn btn-outline-danger px-4 fw-bold mt-2" data-bs-toggle="modal" data-bs-target="#disable2faModal">
+                            <i class="bi bi-shield-slash me-2"></i>Désactiver le double facteur (2FA)
+                        </button>
+                    </div>
+                </div>
+
+                {% else %}
+                <!-- État : 2FA désactivé (flux de configuration) -->
+                <div class="row align-items-center g-5">
+                    <!-- Gauche : QR Code et Secret -->
+                    <div class="col-md-5 text-center">
+                        <div class="qr-container bg-white p-3 rounded-4 shadow-sm border mx-auto mb-3" style="width: fit-content;">
+                            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code 2FA" class="img-fluid" style="width: 220px; height: 220px;">
+                        </div>
+                        <div class="alert alert-light border py-2 px-3 rounded-3 mb-0 d-inline-block small">
+                            <span class="text-muted me-2 small">Clé de secours :</span>
+                            <code class="fw-bold text-dark fs-6">{{ secret }}</code>
+                        </div>
+                    </div>
+
+                    <!-- Droite : Étapes et formulaire de vérification -->
+                    <div class="col-md-7">
+                        <h4 class="fw-bold text-dark mb-4">Activer la protection 2FA</h4>
+                        
+                        <!-- Étape 1 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="step-badge rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; flex-shrink: 0;">1</div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Téléchargez une application d'authentification</h6>
+                                <p class="text-muted small mb-0">Installez **Google Authenticator** ou **Microsoft Authenticator** sur votre appareil mobile (Android / iOS).</p>
+                            </div>
+                        </div>
+
+                        <!-- Étape 2 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="step-badge rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; flex-shrink: 0;">2</div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Scannez le QR Code</h6>
+                                <p class="text-muted small mb-0">Ouvrez l'application mobile et sélectionnez l'option pour scanner un code QR, puis scannez l'image ci-contre.</p>
+                            </div>
+                        </div>
+
+                        <!-- Étape 3 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="step-badge rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; flex-shrink: 0;">3</div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Entrez le code de vérification</h6>
+                                <p class="text-muted small mb-0">Saisissez les 6 chiffres affichés sur votre smartphone pour lier définitivement votre compte.</p>
+                            </div>
+                        </div>
+
+                        <!-- Formulaire de vérification -->
+                        <form method="post" action="{% url 'profile_2fa_verify' %}" class="mt-4 pt-3 border-top">
+                            {% csrf_token %}
+                            <div class="row align-items-end g-3">
+                                <div class="col-sm-7">
+                                    <label class="form-label fw-bold text-secondary">Code à 6 chiffres</label>
+                                    <input type="text" name="code" class="form-control form-control-lg text-center fw-bold" style="letter-spacing: 4px;" placeholder="000000" pattern="[0-9]*" inputmode="numeric" maxlength="6" required>
+                                </div>
+                                <div class="col-sm-5">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">
+                                        <i class="bi bi-shield-lock me-2"></i>Activer 2FA
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if enabled %}
+<!-- Modal de confirmation de désactivation -->
+<div class="modal fade" id="disable2faModal" tabindex="-1" aria-labelledby="disable2faModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-body p-4 text-center">
+                <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                    <i class="bi bi-shield-slash-fill fs-2"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Désactiver le 2FA ?</h5>
+                <p class="text-muted small mb-4">Êtes-vous sûr de vouloir retirer cette couche de protection critique de votre compte ?</p>
+                <form method="post" action="{% url 'profile_2fa_disable' %}">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger py-2 fw-bold rounded-3">Oui, désactiver</button>
+                        <button type="button" class="btn btn-light py-2 fw-bold rounded-3 border" data-bs-dismiss="modal">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .pulse-success-icon {
+        animation: pulse-success-anim 2s infinite;
+    }
+    @keyframes pulse-success-anim {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+        70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(40, 167, 69, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+    }
+    .qr-container img {
+        display: block;
+    }
+</style>
+{% endblock %}

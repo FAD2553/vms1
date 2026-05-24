@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Service : {{ service.nom }} | UWAZY{% endblock %}
+{% block page_title %}Détails du Service{% endblock %}
+
+{% block content %}
+<!-- Rangée des cartes de statistiques (à garder pour un coup d'œil rapide) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card p-3 d-flex align-items-center gap-3 border-start border-4 border-primary">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-calendar-event"></i>
+            </div>
+            <div>
+                <div class="stat-label">Aujourd'hui</div>
+                <div class="stat-value fs-4">{{ visites_aujourdhui }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card p-3 d-flex align-items-center gap-3 border-start border-4 border-success">
+            <div class="stat-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-calendar-range"></i>
+            </div>
+            <div>
+                <div class="stat-label">Semaine</div>
+                <div class="stat-value fs-4">{{ visites_semaine }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card p-3 d-flex align-items-center gap-3 border-start border-4 border-warning">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-calendar-month"></i>
+            </div>
+            <div>
+                <div class="stat-label">Mois</div>
+                <div class="stat-value fs-4">{{ visites_mois }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card p-3 d-flex align-items-center gap-3 border-start border-4 border-info">
+            <div class="stat-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-person-check-fill"></i>
+            </div>
+            <div>
+                <div class="stat-label">Présents</div>
+                <div class="stat-value fs-4">{{ visiteurs_presents }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rangée 1 : Détails & Flux -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <!-- Details du Service -->
+        <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+            <div class="card-body p-4 d-flex align-items-center gap-4">
+                <div class="icon-shape bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center shadow-sm" style="width: 100px; height: 100px; min-width: 100px; font-size: 2.5rem; font-weight: 800;">
+                    {{ service.nom|slice:":1" }}
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h2 class="fw-extrabold text-dark mb-0 text-uppercase letter-spacing-1">{{ service.nom }}</h2>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'service_edit' service.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">Modifier</a>
+                            <a href="{% url 'service_archive' service.pk %}" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">Archiver</a>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0">{{ service.description|default:"Aucun descriptif disponible pour ce service." }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <!-- Flux de visite -->
+        <div class="card border-0 shadow-lg rounded-4 p-4 bg-primary text-white h-100 overflow-hidden position-relative">
+            <div class="position-absolute top-0 end-0 opacity-10" style="font-size: 8rem; transform: translate(20%, -20%);">
+                <i class="bi bi-activity"></i>
+            </div>
+            <h6 class="fw-bold mb-3 small text-uppercase letter-spacing-1">Flux de Visites</h6>
+            <div class="d-flex align-items-end gap-2">
+                <div class="display-4 fw-extrabold">{{ taux_frequentation }}%</div>
+                <div class="small fw-bold opacity-75 mb-2">du trafic total</div>
+            </div>
+            <p class="extra-small opacity-75 mt-2 mb-0">Part de ce service ce mois-ci.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Rangée 2 : Évolution & Top Visiteur -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <!-- Évolution hebdomadaire -->
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white py-4 px-4 border-0">
+                <h6 class="mb-0 fw-extrabold text-uppercase small text-muted letter-spacing-1"><i class="bi bi-graph-up me-2 text-primary"></i> Évolution hebdomadaire</h6>
+            </div>
+            <div class="card-body p-4">
+                <div style="height: 300px;">
+                    <canvas id="serviceEvolutionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <!-- Top Visiteur -->
+        {% if top_visiteur %}
+        <div class="card border-0 shadow-lg rounded-4 h-100 overflow-hidden" style="background: linear-gradient(135deg, #FFF9EB 0%, #FFF 100%); border-top: 5px solid #FFC107 !important;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h6 class="text-uppercase fw-bold text-muted small letter-spacing-1 mb-0"><i class="bi bi-award-fill me-2 text-warning"></i> Top Visiteur</h6>
+            </div>
+            <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                <div class="bg-warning bg-opacity-25 text-warning rounded-circle d-flex align-items-center justify-content-center shadow-sm mb-3 mx-auto" style="width: 100px; height: 100px;">
+                    <span class="fw-extrabold fs-1">{{ top_visiteur.nom|slice:":1" }}{{ top_visiteur.prenom|slice:":1" }}</span>
+                </div>
+                <h4 class="fw-extrabold text-dark mb-1 text-uppercase">{{ top_visiteur.prenom }} {{ top_visiteur.nom }}</h4>
+                <span class="badge bg-warning bg-opacity-10 text-warning-emphasis px-4 py-2 rounded-pill fw-bold mb-4">
+                    <i class="bi bi-star-fill me-1"></i> {{ top_visiteur.visit_count }} VISITES
+                </span>
+                <a href="{% url 'visiteur_detail' top_visiteur.pk %}" class="btn btn-dark w-100 py-3 rounded-pill fw-bold shadow-sm">
+                    VOIR LE PROFIL <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="card border-0 shadow-sm rounded-4 h-100 d-flex align-items-center justify-content-center p-5 text-center bg-light">
+            <i class="bi bi-award text-muted fs-1 mb-3"></i>
+            <h6 class="text-muted fw-bold">Aucun Top Visiteur</h6>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Rangée 3 : Historique -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-white py-4 px-4 border-0">
+                <h6 class="mb-0 fw-extrabold text-uppercase small text-muted letter-spacing-1"><i class="bi bi-clock-history me-2 text-primary"></i> Historique Complet des Passages ({{ visites|length }})</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr class="text-uppercase small fw-bold text-muted border-0">
+                                <th class="ps-4 py-3">Visiteur</th>
+                                <th>Entrée</th>
+                                <th>Sortie</th>
+                                <th class="text-center">Motif</th>
+                                <th class="pe-4 text-end">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            {% for v in visites %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar-xs bg-light text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-xs" style="width: 35px; height: 35px; font-size: 0.75rem;">
+                                            {{ v.visiteur.nom|slice:":1" }}{{ v.visiteur.prenom|slice:":1" }}
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'visiteur_detail' v.visiteur.pk %}" class="fw-extrabold text-dark text-decoration-none small d-block">{{ v.visiteur.prenom }} {{ v.visiteur.nom }}</a>
+                                            <small class="text-muted extra-small">CNI: {{ v.visiteur.numero_cni }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-primary">{{ v.heure_entree|date:"H:i" }}</div>
+                                    <small class="text-muted extra-small">{{ v.heure_entree|date:"d M Y" }}</small>
+                                </td>
+                                <td>
+                                    {% if v.heure_sortie %}
+                                        <div class="fw-bold text-dark">{{ v.heure_sortie|date:"H:i" }}</div>
+                                        <small class="text-muted extra-small">{{ v.heure_sortie|date:"d M Y" }}</small>
+                                    {% else %}
+                                        <span class="text-muted extra-small italic">En cours...</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-muted small truncate-text" style="max-width: 200px;" title="{{ v.motif }}">{{ v.motif }}</span>
+                                </td>
+                                <td class="pe-4 text-end">
+                                    {% if v.heure_sortie %}
+                                        <span class="badge bg-light text-muted-custom border fw-bold rounded-pill px-3">Terminé</span>
+                                    {% else %}
+                                        <span class="badge bg-success shadow-sm fw-bold rounded-pill px-3">Sur place</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center py-5 text-muted">Aucune visite pour ce service.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.fw-extrabold { font-weight: 800; }
+.letter-spacing-1 { letter-spacing: 1.5px; }
+.shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+.extra-small { font-size: 0.7rem; }
+.truncate-text { display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.text-muted-custom { color: #64748b; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('serviceEvolutionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels|safe }},
+                datasets: [{
+                    label: 'Visites',
+                    data: {{ chart_data|safe }},
+                    borderColor: '#2563EB',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#FFF',
+                    pointBorderColor: '#2563EB',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { borderDash: [5, 5], color: '#f1f5f9' },
+                        ticks: { stepSize: 1 }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

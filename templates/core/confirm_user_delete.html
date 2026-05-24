@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Supprimer Utilisateur | VMS{% endblock %}
+{% block page_title %}Confirmer la suppression{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm overflow-hidden mb-4 rounded-4">
+            <div class="card-body p-5 text-center">
+                <div class="avatar-lg bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; font-size: 2rem;">
+                    <i class="bi bi-person-x-fill text-danger"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-3">Supprimer l'utilisateur ?</h4>
+                <p class="text-muted mb-4 px-3">
+                    Êtes-vous sûr de vouloir supprimer définitivement le compte de <strong>{{ target_user.first_name }} {{ target_user.last_name }}</strong> (@{{ target_user.username }}) ? Cette action est irréversible.
+                </p>
+                
+                <form method="post" class="d-flex gap-2 justify-content-center">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4 py-2 rounded-pill shadow-sm fw-bold">
+                        <i class="bi bi-trash me-2"></i> supprimer définitivement
+                    </button>
+                    <a href="{% url 'user_list' %}" class="btn btn-light px-4 py-2 rounded-pill fw-bold border">Annuler</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

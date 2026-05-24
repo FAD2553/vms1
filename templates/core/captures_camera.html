@@ -1,0 +1,777 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Galerie des Captures Caméra | UWAZY{% endblock %}
+{% block page_title %}Galerie des Captures Caméra{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gallery-container {
+        animation: fadeIn 0.4s ease-out;
+    }
+    
+    .filter-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+
+    .capture-card {
+        border: none;
+        border-radius: 16px;
+        background: #FFFFFF;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .capture-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .image-container {
+        position: relative;
+        width: 100%;
+        padding-top: 75%; /* 4:3 Aspect Ratio */
+        background-color: #f3f4f6;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    .capture-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .capture-card:hover .capture-img {
+        transform: scale(1.08);
+    }
+
+    .card-badges {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .badge-premium {
+        background: rgba(17, 24, 39, 0.75);
+        backdrop-filter: blur(4px);
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .badge-type {
+        background: var(--primary-color);
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    .card-footer-custom {
+        padding: 1.25rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .filename-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #1F2937;
+        margin-bottom: 4px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .capture-meta {
+        font-size: 0.75rem;
+        color: #6B7280;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .capture-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 1rem;
+        border-top: 1px solid #F3F4F6;
+        padding-top: 0.75rem;
+    }
+
+    .btn-action {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 6px 10px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-view {
+        background-color: #EFF6FF;
+        color: #2563EB;
+        border: none;
+    }
+    .btn-view:hover {
+        background-color: #2563EB;
+        color: #ffffff;
+    }
+
+    .btn-download {
+        background-color: #F3F4F6;
+        color: #4B5563;
+        border: none;
+    }
+    .btn-download:hover {
+        background-color: #E5E7EB;
+        color: #1F2937;
+    }
+
+    .btn-delete {
+        background-color: #FEF2F2;
+        color: #EF4444;
+        border: none;
+        flex: 0 0 38px;
+        height: 33px;
+        width: 38px;
+        padding: 0;
+    }
+    .btn-delete:hover {
+        background-color: #EF4444;
+        color: #ffffff;
+    }
+
+    /* Lightbox Modal */
+    .lightbox-modal .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(15px);
+        border: none;
+        border-radius: 24px;
+        overflow: hidden;
+    }
+
+    .lightbox-image-container {
+        background-color: #111827;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        min-height: 400px;
+        max-height: 70vh;
+        overflow: hidden;
+    }
+
+    .lightbox-img {
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+    }
+
+    /* Smooth transitions */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-out {
+        opacity: 0 !important;
+        transform: scale(0.9) !important;
+        transition: all 0.4s ease-out !important;
+    }
+
+    /* Floating success alert */
+    .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 1080;
+    }
+
+    .toast-premium {
+        background: #1F2937;
+        color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border-left: 4px solid #10B981;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gallery-container">
+    
+    <!-- Zone d'alerte flottante pour notifications AJAX -->
+    <div class="toast-container">
+        <div id="ajaxToast" class="toast toast-premium align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                    <span id="toastMessage">Action effectuée avec succès.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSRF Token Container for AJAX deletion -->
+    <div id="csrf-token-container" style="display: none;">
+        {% csrf_token %}
+    </div>
+
+    <!-- Formulaire de filtres et d'organisation -->
+    <div class="card filter-card mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-funnel-fill text-primary me-2"></i>Filtrer et trier les captures</h5>
+            <form method="GET" action="" id="filterForm">
+                <div class="row g-3">
+                    <!-- Recherche par nom -->
+                    <div class="col-md-3">
+                        <label class="form-label">Rechercher un fichier</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" name="q" value="{{ q }}" class="form-control border-start-0" placeholder="Nom de fichier...">
+                        </div>
+                    </div>
+
+                    <!-- Filtre par type -->
+                    <div class="col-md-2">
+                        <label class="form-label">Type de capture</label>
+                        <select name="type" class="form-select" data-no-select2>
+                            <option value="">Tous les types</option>
+                            {% for prefix in prefixes %}
+                            <option value="{{ prefix }}" {% if selected_type == prefix %}selected{% endif %}>{{ prefix }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Filtre par date -->
+                    <div class="col-md-2">
+                        <label class="form-label">Date de capture</label>
+                        <input type="date" name="date" value="{{ selected_date }}" class="form-control">
+                    </div>
+
+                    <!-- Tri -->
+                    <div class="col-md-2">
+                        <label class="form-label">Ordre d'affichage</label>
+                        <select name="sort" class="form-select" data-no-select2>
+                            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Plus récent premier</option>
+                            <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Plus ancien premier</option>
+                        </select>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="bi bi-filter me-1"></i> Filtrer
+                        </button>
+                        <button type="button" class="btn btn-light py-2 px-3" id="resetBtn" title="Réinitialiser les filtres">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Galerie de photos -->
+    <div class="row g-4 mb-4" id="captures-grid">
+        {% for file in page_obj %}
+        <div class="col-sm-6 col-md-4 col-lg-3 capture-col" id="card-{{ file.name|slugify }}">
+            <div class="card capture-card">
+                <div class="image-container" onclick="openLightbox('{{ file.url }}', '{{ file.name }}', '{{ file.prefix }}', '{{ file.date_str }}', '{{ file.time_str }}', '{{ file.size_kb }} KB')">
+                    <div class="card-badges">
+                        <span class="badge-premium">{{ file.size_kb }} KB</span>
+                        <span class="badge-type">{{ file.prefix }}</span>
+                    </div>
+                    <img src="{{ file.url }}" alt="{{ file.name }}" class="capture-img" loading="lazy">
+                </div>
+                <div class="card-footer-custom">
+                    <div>
+                        <div class="filename-title" title="{{ file.name }}">{{ file.name }}</div>
+                        <div class="capture-meta">
+                            <span><i class="bi bi-calendar3 me-1"></i>{{ file.date_str }}</span>
+                            <span><i class="bi bi-clock me-1"></i>{{ file.time_str }}</span>
+                        </div>
+                    </div>
+                    <div class="capture-actions">
+                        <button type="button" class="btn-action btn-view" onclick="openLightbox('{{ file.url }}', '{{ file.name }}', '{{ file.prefix }}', '{{ file.date_str }}', '{{ file.time_str }}', '{{ file.size_kb }} KB')">
+                            <i class="bi bi-eye"></i> Voir
+                        </button>
+                        <a href="{{ file.url }}" download="{{ file.name }}" class="btn-action btn-download text-decoration-none">
+                            <i class="bi bi-download"></i>
+                        </a>
+                        <button type="button" class="btn-action btn-delete" onclick="confirmDeletion('{{ file.name }}', 'card-{{ file.name|slugify }}')" title="Supprimer définitivement">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5" id="gallery-empty-state">
+            <div class="text-muted-custom mb-3">
+                <i class="bi bi-image-alt fs-1 opacity-50"></i>
+            </div>
+            <h5 class="fw-bold text-secondary">Aucune capture caméra trouvée</h5>
+            <p class="text-muted small">Essayez de modifier vos filtres ou effectuez de nouveaux scans.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination-container">
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Pagination captures">
+            <ul class="pagination justify-content-center shadow-sm rounded-4 overflow-hidden border-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link py-2.5 px-3.5" href="?page=1{% if q %}&q={{ q }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link py-2.5 px-3.5" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link py-2.5 px-3.5">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link py-2.5 px-3.5" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link py-2.5 px-3.5" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link py-2.5 px-3.5" href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Lightbox Modal -->
+<div class="modal fade lightbox-modal" id="lightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold text-dark" id="lightboxTitle">Nom de l'image</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="lightbox-image-container">
+                    <img src="" id="lightboxImg" class="lightbox-img" alt="Vue détaillée">
+                </div>
+                <div class="p-4 bg-white border-top">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <span class="text-muted d-block small uppercase text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Type</span>
+                            <span class="fw-bold text-primary" id="lightboxMetaType" style="font-size: 0.9rem;">-</span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted d-block small uppercase text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Date de capture</span>
+                            <span class="fw-bold text-dark" id="lightboxMetaDate" style="font-size: 0.9rem;">-</span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted d-block small uppercase text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Heure de capture</span>
+                            <span class="fw-bold text-dark" id="lightboxMetaTime" style="font-size: 0.9rem;">-</span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted d-block small uppercase text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Taille du fichier</span>
+                            <span class="fw-bold text-dark" id="lightboxMetaSize" style="font-size: 0.9rem;">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-3 bg-light">
+                <a href="" id="lightboxDownloadBtn" download="" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    <i class="bi bi-download me-1"></i> Télécharger
+                </a>
+                <button type="button" class="btn btn-primary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmation Suppression -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-body p-4 text-center">
+                <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                    <i class="bi bi-trash-fill fs-2"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Supprimer l'image ?</h5>
+                <p class="text-muted small mb-4">Cette action est définitive et supprimera physiquement le fichier sur le serveur.</p>
+                <input type="hidden" id="deleteTargetFilename">
+                <input type="hidden" id="deleteTargetCardId">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-danger py-2 fw-bold rounded-3" id="confirmDeleteBtn">Oui, supprimer</button>
+                    <button type="button" class="btn btn-light py-2 fw-bold rounded-3 border" data-bs-dismiss="modal">Annuler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Lightbox modal handling
+    const lightboxModal = new bootstrap.Modal(document.getElementById('lightboxModal'));
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+
+    function openLightbox(url, filename, type, date, time, size) {
+        document.getElementById('lightboxTitle').textContent = filename;
+        document.getElementById('lightboxImg').src = url;
+        document.getElementById('lightboxMetaType').textContent = type;
+        document.getElementById('lightboxMetaDate').textContent = date;
+        document.getElementById('lightboxMetaTime').textContent = time;
+        document.getElementById('lightboxMetaSize').textContent = size;
+        
+        const dlBtn = document.getElementById('lightboxDownloadBtn');
+        dlBtn.href = url;
+        dlBtn.download = filename;
+
+        lightboxModal.show();
+    }
+
+    // Deletion Modal handling
+    function confirmDeletion(filename, cardId) {
+        document.getElementById('deleteTargetFilename').value = filename;
+        document.getElementById('deleteTargetCardId').value = cardId;
+        deleteModal.show();
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        const filename = document.getElementById('deleteTargetFilename').value;
+        const cardId = document.getElementById('deleteTargetCardId').value;
+        
+        if (!filename) return;
+
+        // Perform AJAX deletion
+        const csrfToken = document.querySelector('#csrf-token-container [name=csrfmiddlewaretoken]').value;
+        const deleteUrl = "{% url 'delete_capture' 'FILENAME_PLACEHOLDER' %}".replace('FILENAME_PLACEHOLDER', encodeURIComponent(filename));
+
+        deleteModal.hide();
+
+        fetch(deleteUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Animate card removal
+                const cardEl = document.getElementById(cardId);
+                if (cardEl) {
+                    cardEl.classList.add('fade-out');
+                    setTimeout(() => {
+                        cardEl.remove();
+                        // If no more cards, reload or show empty state
+                        const remaining = document.querySelectorAll('.capture-col').length;
+                        if (remaining === 0) {
+                            window.location.reload();
+                        }
+                    }, 400);
+                }
+                
+                // Show Success Toast
+                showToast("La capture a été supprimée avec succès.");
+            } else {
+                alert("Erreur de suppression: " + (data.error || "Inconnue"));
+            }
+        })
+        .catch(err => {
+            console.error("AJAX Error:", err);
+            alert("Une erreur est survenue lors de la communication avec le serveur.");
+        });
+    });
+
+    function showToast(message) {
+        document.getElementById('toastMessage').textContent = message;
+        const toastEl = document.getElementById('ajaxToast');
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+    }
+
+    // Reset filters handling
+    document.getElementById('resetBtn').addEventListener('click', function() {
+        const form = document.getElementById('filterForm');
+        form.querySelector('input[name="q"]').value = '';
+        form.querySelector('select[name="type"]').value = '';
+        form.querySelector('input[name="date"]').value = '';
+        form.querySelector('select[name="sort"]').value = 'newest';
+        form.submit();
+    });
+
+    // --- REAL-TIME UPDATES (polling every 4 seconds) ---
+    
+    function getPageUrl(pageNum) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', pageNum);
+        url.searchParams.delete('format');
+        return url.pathname + url.search;
+    }
+
+    function updatePagination(pagination) {
+        const container = document.getElementById('pagination-container');
+        if (!container) return;
+        
+        if (!pagination.has_other_pages) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = `<nav aria-label="Pagination captures">
+            <ul class="pagination justify-content-center shadow-sm rounded-4 overflow-hidden border-0">`;
+            
+        if (pagination.has_previous) {
+            html += `
+                <li class="page-item">
+                    <a class="page-link py-2.5 px-3.5" href="${getPageUrl(1)}">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link py-2.5 px-3.5" href="${getPageUrl(pagination.previous_page_number)}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            `;
+        }
+        
+        pagination.page_range.forEach(num => {
+            if (pagination.number === num) {
+                html += `<li class="page-item active"><span class="page-link py-2.5 px-3.5">${num}</span></li>`;
+            } else if (num > pagination.number - 3 && num < pagination.number + 3) {
+                html += `
+                    <li class="page-item">
+                        <a class="page-link py-2.5 px-3.5" href="${getPageUrl(num)}">${num}</a>
+                    </li>
+                `;
+            }
+        });
+        
+        if (pagination.has_next) {
+            html += `
+                <li class="page-item">
+                    <a class="page-link py-2.5 px-3.5" href="${getPageUrl(pagination.next_page_number)}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link py-2.5 px-3.5" href="${getPageUrl(pagination.num_pages)}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+            `;
+        }
+        
+        html += `</ul></nav>`;
+        container.innerHTML = html;
+    }
+
+    function updateCapturesGrid(files) {
+        const grid = document.getElementById('captures-grid');
+        if (!grid) return;
+        
+        if (files.length === 0) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5" id="gallery-empty-state">
+                    <div class="text-muted-custom mb-3">
+                        <i class="bi bi-image-alt fs-1 opacity-50"></i>
+                    </div>
+                    <h5 class="fw-bold text-secondary">Aucune capture caméra trouvée</h5>
+                    <p class="text-muted small">Essayez de modifier vos filtres ou effectuez de nouveaux scans.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const emptyState = document.getElementById('gallery-empty-state');
+        if (emptyState) emptyState.remove();
+        
+        const existingCols = grid.querySelectorAll('.capture-col');
+        const existingSlugs = new Set();
+        existingCols.forEach(col => {
+            const slug = col.id.replace('card-', '');
+            if (slug) existingSlugs.add(slug);
+        });
+        
+        const newSlugs = new Set(files.map(f => f.slug));
+        
+        // Remove deleted cards with fade-out animation
+        existingCols.forEach(col => {
+            const slug = col.id.replace('card-', '');
+            if (!newSlugs.has(slug)) {
+                col.classList.add('fade-out');
+                setTimeout(() => col.remove(), 400);
+            }
+        });
+        
+        // Add or update cards in-place to respect ordering
+        files.forEach((f, index) => {
+            const cardId = `card-${f.slug}`;
+            let col = document.getElementById(cardId);
+            
+            const safeUrl = f.url.replace(/'/g, "\\'");
+            const safeName = f.name.replace(/'/g, "\\'");
+            const safePrefix = f.prefix.replace(/'/g, "\\'");
+            const safeDate = f.date_str.replace(/'/g, "\\'");
+            const safeTime = f.time_str.replace(/'/g, "\\'");
+            const safeSize = `${f.size_kb} KB`;
+            
+            const colHtml = `
+                <div class="card capture-card">
+                    <div class="image-container" onclick="openLightbox('${safeUrl}', '${safeName}', '${safePrefix}', '${safeDate}', '${safeTime}', '${safeSize}')">
+                        <div class="card-badges">
+                            <span class="badge-premium">${f.size_kb} KB</span>
+                            <span class="badge-type">${f.prefix}</span>
+                        </div>
+                        <img src="${safeUrl}" alt="${safeName}" class="capture-img" loading="lazy">
+                    </div>
+                    <div class="card-footer-custom">
+                        <div>
+                            <div class="filename-title" title="${safeName}">${f.name}</div>
+                            <div class="capture-meta">
+                                <span><i class="bi bi-calendar3 me-1"></i>${f.date_str}</span>
+                                <span><i class="bi bi-clock me-1"></i>${f.time_str}</span>
+                            </div>
+                        </div>
+                        <div class="capture-actions">
+                            <button type="button" class="btn-action btn-view" onclick="openLightbox('${safeUrl}', '${safeName}', '${safePrefix}', '${safeDate}', '${safeTime}', '${safeSize}')">
+                                <i class="bi bi-eye"></i> Voir
+                            </button>
+                            <a href="${safeUrl}" download="${safeName}" class="btn-action btn-download text-decoration-none">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <button type="button" class="btn-action btn-delete" onclick="confirmDeletion('${safeName}', '${cardId}')" title="Supprimer définitivement">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (!col) {
+                col = document.createElement('div');
+                col.id = cardId;
+                col.className = 'col-sm-6 col-md-4 col-lg-3 capture-col';
+                col.style.opacity = '0';
+                col.style.transform = 'scale(0.9)';
+                col.style.transition = 'all 0.4s ease-out';
+                col.innerHTML = colHtml;
+                
+                if (grid.children[index]) {
+                    grid.insertBefore(col, grid.children[index]);
+                } else {
+                    grid.appendChild(col);
+                }
+                
+                setTimeout(() => {
+                    col.style.opacity = '1';
+                    col.style.transform = 'scale(1)';
+                }, 50);
+            } else {
+                const titleEl = col.querySelector('.filename-title');
+                if (titleEl && titleEl.textContent !== f.name) {
+                    col.innerHTML = colHtml;
+                }
+                
+                if (grid.children[index] !== col) {
+                    grid.insertBefore(col, grid.children[index]);
+                }
+            }
+        });
+    }
+
+    function pollCapturesUpdates() {
+        const url = new URL(window.location.href);
+        url.searchParams.set('format', 'json');
+        
+        fetch(url.pathname + url.search)
+            .then(res => res.json())
+            .then(data => {
+                updateCapturesGrid(data.files);
+                updatePagination(data.pagination);
+            })
+            .catch(err => console.error("Error polling captures camera updates:", err));
+    }
+
+    // Visibility-aware polling for captures camera updates
+    let capturesPollingId = null;
+    function startCapturesPolling() {
+        if (!capturesPollingId) {
+            capturesPollingId = setInterval(pollCapturesUpdates, 8000);
+        }
+    }
+    function stopCapturesPolling() {
+        if (capturesPollingId) {
+            clearInterval(capturesPollingId);
+            capturesPollingId = null;
+        }
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopCapturesPolling();
+        } else {
+            startCapturesPolling();
+        }
+    });
+    // Start polling if page is initially visible
+    if (!document.hidden) {
+        startCapturesPolling();
+    }
+</script>
+{% endblock %}

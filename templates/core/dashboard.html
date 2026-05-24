@@ -1,0 +1,859 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord | UWAZY{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+{% if show_2fa_warning %}
+<!-- Alerte 2FA Banner -->
+<div class="row mb-4" id="twoFactorAlertRow">
+    {% csrf_token %}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm overflow-hidden position-relative" style="background: linear-gradient(135deg, #FFFDF5 0%, #FFF9E6 100%); border-left: 5px solid #F59E0B !important; border-radius: 16px;">
+            <!-- Dismiss button -->
+            <button type="button" class="btn-close position-absolute" style="top: 15px; right: 15px; z-index: 10;" id="dismiss2faBtn" aria-label="Close"></button>
+            
+            <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm alert-pulse-box" style="width: 54px; height: 54px; background: rgba(245, 158, 11, 0.15); color: #D97706;">
+                        <i class="bi bi-shield-exclamation fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Sécurisez votre compte avec la validation 2FA</h5>
+                        <p class="text-secondary small mb-0">L'authentification à double facteur (2FA) n'est pas activée sur votre compte. Nous vous recommandons vivement de l'activer pour protéger vos données et les accès au système.</p>
+                    </div>
+                </div>
+                <div class="flex-shrink-0">
+                    <a href="{% url 'profile_2fa_setup' %}" class="btn btn-warning text-dark fw-bold px-4 py-2 rounded-pill shadow-sm hover-lift" style="background-color: #F59E0B; border: none; transition: all 0.2s ease;">
+                        <i class="bi bi-shield-check me-2"></i>Activer le 2FA
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Contexte de bienvenue et de porte -->
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h4 class="fw-bold mb-1">Bienvenue, {{ user.first_name|default:user.username }}</h4>
+        <p class="text-muted-custom small mb-0">
+            {% if user.is_superuser %}
+            Console d'administration globale du système.
+            {% else %}
+            {% if porte_actuelle %}
+            Vous êtes actuellement affecté à la <span class="badge bg-primary px-3">Porte {{ porte_actuelle.numero }}</span>
+            {% else %}
+            <span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> Aucune porte ne vous est
+                assignée. Contactez l'admin.</span>
+            {% endif %}
+            {% endif %}
+        </p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <div class="bg-white p-2 px-3 rounded-pill shadow-sm border d-inline-flex align-items-center gap-2">
+            <span class="small fw-bold text-muted-custom">{{ now|date:"d F Y" }}</span>
+            <div class="vr opacity-25" style="height: 15px;"></div>
+            <span class="small fw-bold text-primary" id="liveTime">00:00:00</span>
+        </div>
+    </div>
+</div>
+
+<!-- Cartes de statistiques -->
+<div class="row g-3 mb-4">
+    <!-- Carte 1 : Dépendante du contexte -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-start border-4 border-primary">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background: #DBEAFE; color: #2563EB;">
+                    <i class="bi {% if user.is_superuser %}bi-door-open{% else %}bi-geo-alt-fill{% endif %}"></i>
+                </div>
+                <div>
+                    {% if user.is_superuser %}
+                    <div class="stat-value" id="stat-total-portes">{{ total_portes }}</div>
+                    <div class="stat-label">Total Portes</div>
+                    {% else %}
+                    <div class="stat-value" id="stat-porte-affectee" style="font-size: 1.4rem;">{{ porte_actuelle.numero|default:"N/A" }}</div>
+                    <div class="stat-label">Porte Affectée</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background: rgba(40, 167, 69, 0.08); color: #28a745;">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-visiteurs-presents">{{ visiteurs_presents }}</div>
+                    <div class="stat-label">Présents {% if not user.is_superuser %}(Porte){% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background: rgba(255, 193, 7, 0.08); color: #ffc107;">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-visites-aujourdhui">{{ visites_aujourdhui }}</div>
+                    <div class="stat-label">Entrées {% if not user.is_superuser %}(Porte){% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background: rgba(108, 117, 125, 0.08); color: #6c757d;">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-total-visiteurs">{{ total_visiteurs }}</div>
+                    <div class="stat-label">Bdd Visiteurs</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.is_superuser %}
+<!-- Statistiques spécifiques à l'administrateur -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-start border-4 border-info">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background: rgba(13, 202, 240, 0.08); color: #0dcaf0;">
+                    <i class="bi bi-shield-lock"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-total-agents">{{ total_agents }}</div>
+                    <div class="stat-label">Total Agents</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background: rgba(32, 201, 151, 0.08); color: #20c997;">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-active-agents">{{ active_agents }}</div>
+                    <div class="stat-label">Agents Actifs</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background: rgba(102, 16, 242, 0.08); color: #6610f2;">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-total-services">{{ total_services }}</div>
+                    <div class="stat-label">Total Services</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background: rgba(40, 167, 69, 0.08); color: #28a745;">
+                    <i class="bi bi-broadcast"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-agents-en-ligne">{{ agents_en_ligne|default:0 }}</div>
+                    <div class="stat-label">Agents en ligne</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Raccourcis et outils rapides -->
+<div class="row g-3 mb-4 justify-content-center">
+    <div class="{% if user.username == 'admin_secours' %}col-md-4 col-xl-5-cols{% elif user.is_superuser %}col-md-3{% else %}col-md-4{% endif %}">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <a href="{% url 'visite_create' %}"
+                    class="btn btn-primary w-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center"
+                    style="border-radius: 12px; height: 100px;">
+                    <i class="bi bi-plus-lg fs-2"></i>
+                    <span class="fw-bold mt-2 text-uppercase">Nouvelle Entrée</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="{% if user.username == 'admin_secours' %}col-md-4 col-xl-5-cols{% elif user.is_superuser %}col-md-3{% else %}col-md-4{% endif %}">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <a href="{% url 'visiteur_create' %}?ocr=1&camera=1"
+                    class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center justify-content-center"
+                    style="border-radius: 12px; height: 100px;">
+                    <i class="bi bi-camera fs-2"></i>
+                    <span class="fw-bold mt-2 text-uppercase">Scanner CNIB</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="{% if user.username == 'admin_secours' %}col-md-4 col-xl-5-cols{% elif user.is_superuser %}col-md-3{% else %}col-md-4{% endif %}">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <a href="{% url 'visite_list' %}?statut=PRESENT"
+                    class="btn btn-outline-success w-100 py-3 d-flex flex-column align-items-center justify-content-center"
+                    style="border-radius: 12px; height: 100px;">
+                    <i class="bi bi-box-arrow-right fs-2"></i>
+                    <span class="fw-bold mt-2 text-uppercase">Enregistrer Sortie</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% if user.is_superuser %}
+    <div class="{% if user.username == 'admin_secours' %}col-md-6 col-xl-5-cols{% else %}col-md-3{% endif %}">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <button type="button"
+                    class="btn btn-dark w-100 py-3 d-flex flex-column align-items-center justify-content-center"
+                    style="border-radius: 12px; height: 100px;" data-bs-toggle="modal" data-bs-target="#reportModal">
+                    <i class="bi bi-file-earmark-pdf fs-2"></i>
+                    <span class="fw-bold mt-2 text-uppercase">Rapports PDF</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if user.username == 'admin_secours' %}
+    <div class="col-md-6 col-xl-5-cols">
+        <div class="card border-0 shadow-sm h-100 border-start border-4 border-warning">
+            <div class="card-body p-3">
+                <a href="{% url 'captures_camera' %}"
+                    class="btn btn-warning w-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center hover-lift"
+                    style="border-radius: 12px; height: 100px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); border: none; color: #fff;">
+                    <i class="bi bi-images fs-2 text-white"></i>
+                    <span class="fw-bold mt-2 text-uppercase text-white">Galerie Captures</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Graphiques -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
+        <div class="card border-0 h-100">
+            <div
+                class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3 px-4">
+                <h6 class="mb-0 fw-bold text-uppercase letter-spacing-1">Flux des Visites {% if not user.is_superuser %}(Porte {{ porte_actuelle.numero }}){% endif %}</h6>
+                <ul class="nav nav-pills custom-pills" id="visitTabs">
+                    <li class="nav-item">
+                        <button class="nav-link" data-period="daily">JOUR</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-period="weekly">SEM.</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link active" data-period="monthly">MOIS</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-period="yearly">ANNEE</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div style="height: 300px;">
+                    <canvas id="visitChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card border-0 h-100">
+            <div class="card-header bg-transparent border-0 py-3 px-4">
+                <h6 class="mb-0 fw-bold text-uppercase letter-spacing-1">Services Sollicités</h6>
+            </div>
+            <div class="card-body px-4">
+                <div style="height: 250px;" class="position-relative">
+                    <canvas id="serviceTrafficChart"></canvas>
+                </div>
+                <!-- Statistiques de progression sous le doughnut -->
+                <div id="doughnutLegend" class="mt-4 row g-3 text-center">
+                    <!-- Chargé via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .letter-spacing-1 {
+        letter-spacing: 1px;
+    }
+
+    .custom-pills .nav-link {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 5px 15px;
+        color: var(--text-muted-custom);
+        border-radius: 8px;
+        background: #F3F4F6;
+        margin: 0 3px;
+    }
+
+    .custom-pills .nav-link.active {
+        background: var(--primary-color) !important;
+        color: #fff !important;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    }
+
+    .blink {
+        animation: blinker 1.5s linear infinite;
+    }
+
+    @keyframes blinker {
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    @keyframes alertPulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+        70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+    .alert-pulse-box {
+        animation: alertPulse 2s infinite;
+    }
+    .hover-lift {
+        transition: all 0.2s ease-in-out;
+    }
+    .hover-lift:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3) !important;
+    }
+
+    @media (min-width: 1200px) {
+        .col-xl-5-cols {
+            flex: 0 0 20%;
+            max-width: 20%;
+        }
+    }
+</style>
+
+<!-- Présence et Entrées Récentes -->
+<div class="row g-4">
+    <!-- Colonne des visiteurs sur place (masquée si vide, gérée via JS/Django context) -->
+    <div class="col-md-6 {% if not visites_sur_place %}d-none{% endif %}" id="presents-column-container" style="transition: all 0.3s ease;">
+        <div class="card border-0 shadow-sm border-start border-success border-4">
+            <div class="card-header bg-white fw-bold text-success py-3 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person-check-fill me-2"></i> VISITEURS ACTUELLEMENT PRÉSENTS</span>
+                <span class="badge bg-success rounded-pill" id="badge-presents">{{ visiteurs_presents }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Visiteur</th>
+                                <th>Service</th>
+                                <th class="pe-4">Arrivée</th>
+                                <th class="text-end pe-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="visites-sur-place-tbody">
+                            {% for v in visites_sur_place %}
+                            <tr id="row-present-{{ v.pk }}" style="transition: all 0.3s ease;">
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">{{ v.visiteur.prenom }} {{ v.visiteur.nom }}</div>
+                                    <small class="text-muted small">ID: {{ v.visiteur.numero_cni }}</small>
+                                </td>
+                                <td><span class="badge bg-light text-dark">{{ v.service_visite.nom }}</span></td>
+                                <td class="text-primary fw-medium">{{ v.heure_entree|date:"H:i" }}</td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'visite_sortie' v.pk %}" class="btn btn-sm btn-success rounded-pill px-3">
+                                        <i class="bi bi-box-arrow-right me-1"></i> Sortie
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Colonne des entrées récentes (prend tout ou partie de la largeur selon s'il y a des présences) -->
+    <div class="col-md-{% if visites_sur_place %}6{% else %}12{% endif %}" id="recents-column-container" style="transition: all 0.3s ease;">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history me-2 text-primary"></i> RÉCENTES ENTRÉES</span>
+                <a href="{% url 'visite_list' %}" class="btn btn-sm btn-link text-decoration-none p-0 fw-bold">Voir tout</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Visiteur</th>
+                                <th>Service</th>{% if user.is_superuser %}<th>Porte</th>{% endif %}<th>Heure</th>
+                                <th class="pe-4 text-end">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-visites-tbody">
+                            {% for v in recent_visites %}
+                            <tr id="row-recent-{{ v.pk }}" style="transition: all 0.3s ease;">
+                                <td class="ps-4">
+                                    <a href="{% url 'visiteur_detail' v.visiteur.pk %}" class="fw-bold text-dark text-decoration-none">{{ v.visiteur.prenom }} {{ v.visiteur.nom }}</a>
+                                </td>
+                                <td>{{ v.service_visite.nom }}</td>
+                                {% if user.is_superuser %}<td><span class="badge bg-dark">{{ v.porte_entree.numero }}</span></td>{% endif %}
+                                <td class="text-muted">{{ v.heure_entree|date:"d/m H:i" }}</td>
+                                <td class="pe-4 text-end">
+                                    {% if v.statut == 'PRESENT' %}
+                                    <span class="text-success small fw-bold blink"><i class="bi bi-dot"></i> Sur Place</span>
+                                    {% else %}
+                                    <span class="text-muted small">Terminé</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr id="recent-empty-row">
+                                <td colspan="5" class="text-center py-4 text-muted fst-italic">Aucune visite enregistrée</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    // Live Time
+    function updateClock() {
+        const now = new Date();
+        const time = now.getHours().toString().padStart(2, '0') + ":" +
+            now.getMinutes().toString().padStart(2, '0') + ":" +
+            now.getSeconds().toString().padStart(2, '0');
+        document.getElementById('liveTime').textContent = time;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const visitData = {
+        daily: { labels: {{ daily_labels| safe }}, data: {{ daily_data | safe }} },
+        weekly: { labels: {{ weekly_labels | safe }}, data: {{ weekly_data | safe }} },
+        monthly: { labels: {{ monthly_labels | safe }}, data: {{ monthly_data | safe }} },
+        yearly: { labels: {{ yearly_labels | safe }}, data: {{ yearly_data | safe }} }
+    };
+
+    const serviceLabels = {{ service_labels| safe }};
+    const serviceData = {{ service_data| safe }};
+    const servicePercents = {{ service_percents| safe }};
+    const brandColors = ['#2563EB', '#1F2937', '#6B7280', '#1D4ED8', '#374151', '#4B5563', '#3B82F6'];
+
+    // 1. VISIT FLOW CHART
+    let visitChart;
+    const ctxVisit = document.getElementById('visitChart').getContext('2d');
+
+    function updateVisitChart(period) {
+        const config = visitData[period];
+        if (visitChart) visitChart.destroy();
+
+        visitChart = new Chart(ctxVisit, {
+            type: period === 'daily' ? 'bar' : 'line',
+            data: {
+                labels: config.labels,
+                datasets: [{
+                    label: 'Visites',
+                    data: config.data,
+                    borderColor: '#2563EB',
+                    backgroundColor: period === 'daily' ? '#2563EB' : 'rgba(37, 99, 235, 0.05)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#2563EB',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { font: { size: 10 }, stepSize: 1 } },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    // 2. FRÉQUENTATION PAR SERVICE DOUGHNUT
+    let serviceTrafficChart;
+    const ctxService = document.getElementById('serviceTrafficChart').getContext('2d');
+    serviceTrafficChart = new Chart(ctxService, {
+        type: 'doughnut',
+        data: {
+            labels: serviceLabels,
+            datasets: [{
+                data: serviceData,
+                backgroundColor: brandColors,
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    function updateServiceLegend(labels, percents) {
+        const legendContainer = document.getElementById('doughnutLegend');
+        if (!legendContainer) return;
+        legendContainer.innerHTML = '';
+        if (labels.length > 0) {
+            labels.slice(0, 3).forEach((label, i) => {
+                const percent = Math.round(percents[i]);
+                legendContainer.innerHTML += `
+                    <div class="col-4">
+                        <div class="fw-bold" style="color: ${brandColors[i]}; font-size: 1.1rem;">${percent}%</div>
+                        <div class="text-muted small" style="font-size: 0.65rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${label}</div>
+                    </div>
+                `;
+            });
+        } else {
+            legendContainer.innerHTML = '<div class="col-12 text-muted small">Aucune donnée</div>';
+        }
+    }
+    updateServiceLegend(serviceLabels, servicePercents);
+
+    document.querySelectorAll('#visitTabs .nav-link').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('#visitTabs .nav-link').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            updateVisitChart(this.dataset.period);
+        });
+    });
+
+    // Dismiss 2FA warning banner handling
+    const dismissBtn = document.getElementById('dismiss2faBtn');
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', function() {
+            const row = document.getElementById('twoFactorAlertRow');
+            if (row) {
+                row.style.transition = 'all 0.3s ease';
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(-10px)';
+                setTimeout(() => row.remove(), 300);
+            }
+            
+            const csrfInput = document.querySelector('#twoFactorAlertRow [name=csrfmiddlewaretoken]');
+            const token = csrfInput ? csrfInput.value : '';
+            
+            fetch("{% url 'dismiss_2fa_warning' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': token,
+                    'Content-Type': 'application/json'
+                }
+            }).catch(err => console.error("Error dismissing 2FA warning:", err));
+        });
+    }
+
+    // --- REAL-TIME UPDATES (polling every 4 seconds) ---
+
+    // Progressive counter animation (Ease-Out Quad)
+    function animateCount(elementId, targetValue) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        const startValue = parseInt(el.textContent.replace(/\D/g, '')) || 0;
+        if (startValue === targetValue) return;
+        
+        const duration = 800; // ms
+        const startTime = performance.now();
+        
+        function update(currentTime) {
+            const elapsedTime = currentTime - startTime;
+            if (elapsedTime >= duration) {
+                el.textContent = targetValue;
+            } else {
+                const progress = elapsedTime / duration;
+                const easeProgress = progress * (2 - progress);
+                const currentValue = Math.round(startValue + (targetValue - startValue) * easeProgress);
+                el.textContent = currentValue;
+                requestAnimationFrame(update);
+            }
+        }
+        requestAnimationFrame(update);
+    }
+
+    // Dynamic Presents Table Diffing
+    function updatePresentsTable(visitesSurPlace) {
+        const tbody = document.getElementById('visites-sur-place-tbody');
+        const presentsCol = document.getElementById('presents-column-container');
+        const recentsCol = document.getElementById('recents-column-container');
+        
+        if (!tbody) return;
+        
+        if (visitesSurPlace.length === 0) {
+            if (presentsCol && recentsCol) {
+                presentsCol.classList.add('d-none');
+                recentsCol.className = 'col-md-12';
+            }
+            tbody.innerHTML = '';
+            return;
+        } else {
+            if (presentsCol && recentsCol) {
+                presentsCol.classList.remove('d-none');
+                recentsCol.className = 'col-md-6';
+            }
+        }
+
+        const existingIds = new Set();
+        tbody.querySelectorAll('tr').forEach(tr => {
+            const id = tr.id.replace('row-present-', '');
+            if (id) existingIds.add(id);
+        });
+
+        const newIds = new Set(visitesSurPlace.map(v => String(v.pk)));
+
+        // Remove departed rows
+        existingIds.forEach(id => {
+            if (!newIds.has(id)) {
+                const tr = document.getElementById(`row-present-${id}`);
+                if (tr) {
+                    tr.style.opacity = '0';
+                    tr.style.transform = 'translateX(-20px)';
+                    setTimeout(() => tr.remove(), 300);
+                }
+            }
+        });
+
+        // Add new rows
+        visitesSurPlace.forEach((v, index) => {
+            const id = String(v.pk);
+            let tr = document.getElementById(`row-present-${id}`);
+            
+            const trHtml = `
+                <td class="ps-4">
+                    <div class="fw-bold text-dark">${v.visiteur}</div>
+                    <small class="text-muted small">ID: ${v.visiteur_cni}</small>
+                </td>
+                <td><span class="badge bg-light text-dark">${v.service}</span></td>
+                <td class="text-primary fw-medium">${v.heure_entree}</td>
+                <td class="text-end pe-4">
+                    <a href="${v.sortie_url}" class="btn btn-sm btn-success rounded-pill px-3">
+                        <i class="bi bi-box-arrow-right me-1"></i> Sortie
+                    </a>
+                </td>
+            `;
+
+            if (!tr) {
+                tr = document.createElement('tr');
+                tr.id = `row-present-${id}`;
+                tr.style.opacity = '0';
+                tr.style.transform = 'translateY(10px)';
+                tr.style.transition = 'all 0.3s ease';
+                tr.innerHTML = trHtml;
+                
+                if (tbody.children[index]) {
+                    tbody.insertBefore(tr, tbody.children[index]);
+                } else {
+                    tbody.appendChild(tr);
+                }
+                
+                setTimeout(() => {
+                    tr.style.opacity = '1';
+                    tr.style.transform = 'translateY(0)';
+                }, 50);
+            } else {
+                if (tr.innerHTML !== trHtml) {
+                    tr.innerHTML = trHtml;
+                }
+                if (tbody.children[index] !== tr) {
+                    tbody.insertBefore(tr, tbody.children[index]);
+                }
+            }
+        });
+    }
+
+    // Dynamic Recents Table Diffing
+    function updateRecentsTable(recentVisites, isSuperuser) {
+        const tbody = document.getElementById('recent-visites-tbody');
+        if (!tbody) return;
+
+        if (recentVisites.length === 0) {
+            tbody.innerHTML = `
+                <tr id="recent-empty-row">
+                    <td colspan="5" class="text-center py-4 text-muted fst-italic">Aucune visite enregistrée</td>
+                </tr>
+            `;
+            return;
+        }
+
+        const emptyRow = document.getElementById('recent-empty-row');
+        if (emptyRow) emptyRow.remove();
+
+        const existingIds = new Set();
+        tbody.querySelectorAll('tr').forEach(tr => {
+            const id = tr.id.replace('row-recent-', '');
+            if (id) existingIds.add(id);
+        });
+
+        const newIds = new Set(recentVisites.map(v => String(v.pk)));
+
+        // Remove old rows
+        existingIds.forEach(id => {
+            if (!newIds.has(id)) {
+                const tr = document.getElementById(`row-recent-${id}`);
+                if (tr) {
+                    tr.style.opacity = '0';
+                    tr.style.transform = 'translateX(20px)';
+                    setTimeout(() => tr.remove(), 300);
+                }
+            }
+        });
+
+        // Add or update rows
+        recentVisites.forEach((v, index) => {
+            const id = String(v.pk);
+            let tr = document.getElementById(`row-recent-${id}`);
+
+            const trHtml = `
+                <td class="ps-4">
+                    <a href="${v.visiteur_detail_url}" class="fw-bold text-dark text-decoration-none">${v.visiteur}</a>
+                </td>
+                <td>${v.service}</td>
+                ${isSuperuser ? `<td><span class="badge bg-dark">${v.porte_entree}</span></td>` : ''}
+                <td class="text-muted">${v.heure_entree}</td>
+                <td class="pe-4 text-end">
+                    ${v.statut === 'PRESENT' ? 
+                        `<span class="text-success small fw-bold blink"><i class="bi bi-dot"></i> Sur Place</span>` : 
+                        `<span class="text-muted small">Terminé</span>`
+                    }
+                </td>
+            `;
+
+            if (!tr) {
+                tr = document.createElement('tr');
+                tr.id = `row-recent-${id}`;
+                tr.style.opacity = '0';
+                tr.style.transform = 'translateY(10px)';
+                tr.style.transition = 'all 0.3s ease';
+                tr.innerHTML = trHtml;
+
+                if (tbody.children[index]) {
+                    tbody.insertBefore(tr, tbody.children[index]);
+                } else {
+                    tbody.appendChild(tr);
+                }
+
+                setTimeout(() => {
+                    tr.style.opacity = '1';
+                    tr.style.transform = 'translateY(0)';
+                }, 50);
+            } else {
+                if (tr.innerHTML !== trHtml) {
+                    tr.innerHTML = trHtml;
+                }
+                if (tbody.children[index] !== tr) {
+                    tbody.insertBefore(tr, tbody.children[index]);
+                }
+            }
+        });
+    }
+
+    // Polling Loop (every 4 seconds)
+    function pollDashboardUpdates() {
+        fetch('/?format=json')
+            .then(response => response.json())
+            .then(data => {
+                // 1. Update stats indicators with counting micro-animations
+                animateCount('stat-total-portes', data.total_portes);
+                animateCount('stat-porte-affectee', parseInt(data.porte_actuelle) || 0);
+                animateCount('stat-visiteurs-presents', data.visiteurs_presents);
+                animateCount('stat-visites-aujourdhui', data.visites_aujourdhui);
+                animateCount('stat-total-visiteurs', data.total_visiteurs);
+                animateCount('stat-total-agents', data.total_agents);
+                animateCount('stat-active-agents', data.active_agents);
+                animateCount('stat-total-services', data.total_services);
+                animateCount('stat-agents-en-ligne', data.agents_en_ligne);
+                
+                const badgePresents = document.getElementById('badge-presents');
+                if (badgePresents) badgePresents.textContent = data.visiteurs_presents;
+
+                // 2. Update list tables with DOM diffing
+                updatePresentsTable(data.visites_sur_place);
+                updateRecentsTable(data.recent_visites, {% if user.is_superuser %}true{% else %}false{% endif %});
+
+                // 3. Update Chart.js datasets dynamically
+                visitData.daily.labels = data.daily_labels;
+                visitData.daily.data = data.daily_data;
+                visitData.weekly.labels = data.weekly_labels;
+                visitData.weekly.data = data.weekly_data;
+                visitData.monthly.labels = data.monthly_labels;
+                visitData.monthly.data = data.monthly_data;
+                visitData.yearly.labels = data.yearly_labels;
+                visitData.yearly.data = data.yearly_data;
+
+                const activeTab = document.querySelector('#visitTabs .nav-link.active');
+                const activePeriod = activeTab ? activeTab.dataset.period : 'monthly';
+                updateVisitChart(activePeriod);
+
+                if (serviceTrafficChart) {
+                    serviceTrafficChart.data.labels = data.service_labels;
+                    serviceTrafficChart.data.datasets[0].data = data.service_data;
+                    serviceTrafficChart.update();
+                }
+                updateServiceLegend(data.service_labels, data.service_percents);
+            })
+            .catch(err => console.error("Error polling dashboard updates:", err));
+    }
+
+    // Visibility-aware polling for dashboard updates
+    let dashboardPollingId = null;
+    function startDashboardPolling() {
+        if (!dashboardPollingId) {
+            dashboardPollingId = setInterval(pollDashboardUpdates, 8000);
+        }
+    }
+    function stopDashboardPolling() {
+        if (dashboardPollingId) {
+            clearInterval(dashboardPollingId);
+            dashboardPollingId = null;
+        }
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopDashboardPolling();
+        } else {
+            startDashboardPolling();
+        }
+    });
+    // Start polling if page is initially visible
+    if (!document.hidden) {
+        startDashboardPolling();
+    }
+
+    updateVisitChart('monthly');
+</script>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Gestion des Services | UWAZY{% endblock %}
+{% block page_title %}Gestion des Services{% endblock %}
+
+{% block content %}
+<!-- En-tête et Recherche -->
+<div class="row g-4 mb-5 align-items-center">
+    <div class="col-md-6 col-lg-7">
+        <h4 class="fw-extrabold mb-1">Services de l'Entreprise</h4>
+        <p class="text-muted small mb-0">Consultez et gérez les départements visitables par vos usagers.</p>
+    </div>
+    <div class="col-md-6 col-lg-5">
+        <div class="d-flex gap-3">
+            <div class="search-box flex-grow-1">
+                <div class="input-group input-group-lg shadow-xs rounded-4 overflow-hidden border">
+                    <span class="input-group-text bg-white border-0"><i class="bi bi-search text-primary"></i></span>
+                    <input type="text" id="serviceSearch" class="form-control border-0 bg-white fs-6" placeholder="Rechercher un service...">
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary px-4 rounded-4 shadow-sm fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                <i class="bi bi-plus-lg"></i> <span class="d-none d-xl-inline">NOUVEAU</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Grille des Services -->
+<div class="row g-4" id="servicesGrid">
+    {% for s in services %}
+    <div class="col-md-6 col-xl-4 service-item">
+        <div class="card service-card h-100 border-0 shadow-sm rounded-4 overflow-hidden transition-all">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div class="service-icon-wrapper rounded-4 d-flex align-items-center justify-content-center shadow-sm" 
+                         style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); width: 56px; height: 56px; min-width: 56px;">
+                        <span class="text-white fw-extrabold fs-4">{{ s.nom|slice:":1"|upper }}</span>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light border-0 rounded-circle shadow-xs" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2 rounded-3">
+                            <li><a class="dropdown-item py-2" href="{% url 'service_detail' s.pk %}"><i class="bi bi-bar-chart-fill me-2 text-primary"></i> Statistiques</a></li>
+                            <li><a class="dropdown-item py-2" href="{% url 'service_edit' s.pk %}"><i class="bi bi-pencil me-2 text-warning"></i> Modifier</a></li>
+                            <li><hr class="dropdown-divider opacity-50"></li>
+                            <li><a class="dropdown-item py-2 text-danger fw-bold" href="{% url 'service_archive' s.pk %}"><i class="bi bi-archive me-2"></i> Archiver</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h5 class="service-name fw-extrabold text-dark mb-2 text-uppercase letter-spacing-1">{{ s.nom }}</h5>
+                <p class="text-muted small mb-4 line-clamp-3" style="min-height: 4.5em;">{{ s.description|default:"Aucune description disponible pour ce service." }}</p>
+                
+                <div class="mt-auto pt-3 border-top d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-bold">
+                            <i class="bi bi-people-fill me-1"></i> {{ s.nb_visites }} visites
+                        </span>
+                    </div>
+                    <a href="{% url 'service_detail' s.pk %}" class="btn btn-link text-primary text-decoration-none fw-bold small p-0">
+                        DÉTAILS <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <div class="bg-light d-inline-block p-4 rounded-circle mb-3">
+            <i class="bi bi-building fs-1 text-muted"></i>
+        </div>
+        <h5 class="text-muted fw-bold">Aucun service trouvé</h5>
+        <p class="text-muted small">Commencez par ajouter un service pour organiser vos visites.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal d'ajout de service -->
+<div class="modal fade" id="addServiceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-dark text-white py-4 px-4 border-0" style="background: linear-gradient(135deg, #1a1d23 0%, #000000 100%) !important;">
+                <h5 class="modal-title fw-extrabold text-uppercase letter-spacing-1"><i class="bi bi-plus-circle me-2 text-primary"></i> Nouveau Service</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 p-md-5">
+                <form method="post" action="{% url 'service_create' %}">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Nom du service <span class="text-danger">*</span></label>
+                        <input type="text" name="nom" class="form-control form-control-lg border-2 shadow-xs rounded-3" placeholder="Ex: Ressources Humaines" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Description</label>
+                        <textarea name="description" class="form-control border-2 shadow-xs rounded-3" rows="4" placeholder="Décrivez brièvement le rôle de ce service..."></textarea>
+                    </div>
+                    <div class="d-grid mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg py-3 fw-extrabold rounded-3 shadow-lg">
+                            <i class="bi bi-save-fill me-2"></i> CRÉER LE SERVICE
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.fw-extrabold { font-weight: 800; }
+.letter-spacing-1 { letter-spacing: 1px; }
+.shadow-xs { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.service-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.service-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important; }
+.service-icon-wrapper { transition: all 0.3s ease; }
+.service-card:hover .service-icon-wrapper { transform: rotate(10deg) scale(1.1); }
+
+/* Dynamic Colors based on initials or hash-like logic */
+.service-item:nth-child(5n+1) .service-icon-wrapper { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; } /* Blue */
+.service-item:nth-child(5n+2) .service-icon-wrapper { background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%) !important; } /* Purple */
+.service-item:nth-child(5n+3) .service-icon-wrapper { background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important; } /* Green */
+.service-item:nth-child(5n+4) .service-icon-wrapper { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important; } /* Orange */
+.service-item:nth-child(5n+5) .service-icon-wrapper { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important; } /* Red */
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('serviceSearch');
+        const grid = document.getElementById('servicesGrid');
+        
+        if (!searchInput || !grid) return;
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const items = grid.querySelectorAll('.service-item');
+            let hasResults = false;
+
+            items.forEach(item => {
+                const name = item.querySelector('.service-name').textContent.toLowerCase();
+                const desc = item.querySelector('p').textContent.toLowerCase();
+                
+                if (name.includes(searchTerm) || desc.includes(searchTerm)) {
+                    item.style.display = '';
+                    hasResults = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Gérer le message "Aucun résultat" si besoin
+            let emptyMsg = document.getElementById('searchEmptyMsg');
+            if (!hasResults && searchTerm !== "") {
+                if (!emptyMsg) {
+                    emptyMsg = document.createElement('div');
+                    emptyMsg.id = 'searchEmptyMsg';
+                    emptyMsg.className = 'col-12 text-center py-5';
+                    emptyMsg.innerHTML = `
+                        <div class="bg-light d-inline-block p-4 rounded-circle mb-3">
+                            <i class="bi bi-search fs-1 text-muted"></i>
+                        </div>
+                        <h5 class="text-muted fw-bold">Aucun résultat pour "${searchTerm}"</h5>
+                    `;
+                    grid.appendChild(emptyMsg);
+                } else {
+                    emptyMsg.querySelector('h5').textContent = `Aucun résultat pour "${searchTerm}"`;
+                }
+            } else if (emptyMsg) {
+                emptyMsg.remove();
+            }
+        });
+    });
+</script>
+{% endblock %}
