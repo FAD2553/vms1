@@ -417,6 +417,29 @@
                             }
                         }
                     }
+
+                    // Auto-remplissage du champ CNIB Recto
+                    const rectoInput = document.getElementById('id_scan_cni_recto');
+                    if (rectoInput && fileInput.files.length > 0) {
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(fileInput.files[0]);
+                        rectoInput.files = dataTransfer.files;
+                        
+                        // Feedback visuel
+                        rectoInput.classList.add('is-valid');
+                        setTimeout(() => rectoInput.classList.remove('is-valid'), 2000);
+                        
+                        const container = rectoInput.closest('.col-md-6');
+                        if (container) {
+                            let feedback = container.querySelector('.auto-fill-feedback');
+                            if (!feedback) {
+                                feedback = document.createElement('div');
+                                feedback.className = 'auto-fill-feedback mt-2 text-success small fw-bold animate__animated animate__fadeIn';
+                                feedback.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Image OCR copiée automatiquement en tant que Recto';
+                                container.appendChild(feedback);
+                            }
+                        }
+                    }
                 } else {
                     resultDiv.innerHTML = '<div class="alert alert-info rounded-3 small py-2 border-0 shadow-xs"><i class="bi bi-info-circle me-2"></i> Échec de l\'extraction automatique. Veuillez saisir les informations manuellement.</div>';
                 }

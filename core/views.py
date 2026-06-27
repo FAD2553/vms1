@@ -233,11 +233,11 @@ def dashboard(request):
     else:
         visites_aujourdhui = Visite.objects.filter(date_visite=today).count() if request.user.is_superuser else 0
     total_services = Service.objects.filter(is_archived=False).count()
-    total_portes = Porte.objects.count()
+    total_portes = Porte.objects.filter(is_archived=False).count()
     
     # Stats Agents (Admin Only)
-    total_agents = User.objects.filter(is_superuser=False).count() if request.user.is_superuser else 0
-    active_agents = User.objects.filter(is_superuser=False, is_active=True).count() if request.user.is_superuser else 0
+    total_agents = User.objects.exclude(profile__is_archived=True).filter(is_superuser=False).count() if request.user.is_superuser else 0
+    active_agents = User.objects.exclude(profile__is_archived=True).filter(is_superuser=False, is_active=True).count() if request.user.is_superuser else 0
     sorties_aujourdhui = Visite.objects.filter(statut='SORTI', heure_sortie__date=today).count() if request.user.is_superuser else 0
     
     # 2. Graphiques
@@ -510,6 +510,10 @@ def visiteur_edit(request, pk):
         messages.error(request, "Impossible de modifier un visiteur archivé.")
         return redirect('visiteur_list')
         
+    if visiteur.est_present:
+        messages.error(request, "Impossible de modifier les informations d'un visiteur actuellement présent.")
+        return redirect('visiteur_detail', pk=visiteur.pk)
+        
     if request.method == 'POST':
         form = VisiteurEditForm(request.POST, request.FILES, instance=visiteur)
         if form.is_valid():
@@ -637,7 +641,7 @@ def porte_list(request):
     if not request.user.is_superuser:
         messages.error(request, "Accès réservé à l'administrateur.")
         return redirect('dashboard')
-    portes = Porte.objects.all().order_by('numero')
+    portes = Porte.objects.filter(is_archived=False).order_by('numero')
     return render(request, 'core/porte_list.html', {'portes': portes})
 
 
@@ -663,7 +667,7 @@ def porte_edit(request, pk):
     if not request.user.is_superuser:
         messages.error(request, "Accès réservé à l'administrateur.")
         return redirect('dashboard')
-    porte = get_object_or_404(Porte, pk=pk)
+    porte = get_object_or_404(Porte, pk=pk, is_archived=False)
     if request.method == 'POST':
         form = PorteForm(request.POST, instance=porte)
         if form.is_valid():
@@ -680,7 +684,7 @@ def porte_detail(request, pk):
     if not request.user.is_superuser:
         messages.error(request, "Accès réservé à l'administrateur.")
         return redirect('dashboard')
-    porte = get_object_or_404(Porte, pk=pk)
+    porte = get_object_or_404(Porte, pk=pk, is_archived=False)
     visites = Visite.objects.filter(Q(porte_entree=porte) | Q(porte_sortie=porte)).select_related('visiteur', 'service_visite', 'agent_entree').order_by('-heure_entree')
     
     total_visites = visites.count()
@@ -699,6 +703,40 @@ def porte_detail(request, pk):
         'duree_moyenne': duree_moyenne,
     }
     return render(request, 'core/porte_detail.html', context)
+
+
+@login_required
+def porte_archive(request, pk):
+    if not request.user.is_superuser:
+        messages.error(request, "Accès réservé à l'administrateur.")
+        return redirect('dashboard')
+        
+    porte = get_object_or_404(Porte, pk=pk, is_archived=False)
+    if porte.visites_entrees.filter(statut='PRESENT').exists():
+        messages.error(request, "Impossible d'archiver une porte avec des visiteurs présents.")
+        return redirect('porte_list')
+        
+    if porte.agents_affectes.filter(is_archived=False).exists():
+        messages.error(request, "Impossible d'archiver une porte avec des agents affectés. Réaffectez ou archivez d'abord les agents.")
+        return redirect('porte_list')
+
+    if request.method == 'POST':
+        Archive.objects.create(
+            type_entite='PORTE',
+            donnees_json={
+                'id': porte.id,
+                'numero': porte.numero,
+                'description': porte.description or '',
+                'total_visites': porte.visites_entrees.count()
+            },
+            admin=request.user
+        )
+        porte.is_archived = True
+        porte.save()
+        log_action(request.user, 'ARCHIVAGE_PORTE', f"Archivage de la porte {porte.numero}", porte.id)
+        messages.success(request, "Porte archivée avec succès.")
+        return redirect('porte_list')
+    return render(request, 'core/confirm_archive.html', {'object': porte})
 
 
 # ============================================================
@@ -1195,9 +1233,43 @@ def pdf_log_list(request):
 
 
 @login_required
+def pdf_fiche_visiteur(request, pk):
+    import base64
+    if not request.user.is_superuser:
+        messages.error(request, "Accès interdit.")
+        return redirect('dashboard')
+        
+    visiteur = get_object_or_404(Visiteur, pk=pk)
+    visites = visiteur.visites.select_related('service_visite', 'porte_entree').order_by('-heure_entree')
+    
+    cnib_recto_base64 = None
+    cnib_recto_type = None
+    
+    if visiteur.scan_cni_recto:
+        file_path = os.path.join(settings.PRIVATE_MEDIA_ROOT, visiteur.scan_cni_recto.name)
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as f:
+                cnib_recto_base64 = base64.b64encode(f.read()).decode('utf-8')
+            cnib_recto_type = 'image/jpeg' if visiteur.scan_cni_recto.name.lower().endswith(('.jpg', '.jpeg')) else 'image/png'
+
+    context = {
+        'visiteur': visiteur,
+        'visites': visites,
+        'cnib_recto_base64': cnib_recto_base64,
+        'cnib_recto_type': cnib_recto_type,
+    }
+    
+    log_action(request.user, 'TELECHARGEMENT_FICHE_PDF', f"Téléchargement de la fiche PDF du visiteur {visiteur}", visiteur.id)
+    return _render_to_pdf(request, 'core/pdf/fiche_visiteur.html', context, f'fiche_visiteur_{visiteur.numero_cni}.pdf')
+
+
+@login_required
 def archive_list(request):
     archives = Archive.objects.select_related('admin').order_by('-date_archivage')
-    return render(request, 'core/archive_list.html', {'archives': archives})
+    type_filter = request.GET.get('type')
+    if type_filter:
+        archives = archives.filter(type_entite=type_filter)
+    return render(request, 'core/archive_list.html', {'archives': archives, 'type_filter': type_filter})
 
 
 @login_required
@@ -1243,6 +1315,46 @@ def archive_restore(request, pk):
         messages.success(request, f"Le service {service.nom} a été restauré avec succès.")
         archive.delete()
         
+    elif archive.type_entite == 'PORTE':
+        porte_data = archive.donnees_json
+        porte_id = porte_data.get('id')
+        porte = get_object_or_404(Porte, pk=porte_id)
+        if Porte.objects.filter(numero=porte_data.get('numero'), is_archived=False).exclude(pk=porte.pk).exists():
+            messages.error(request, f"Une porte active avec le numéro '{porte_data.get('numero')}' existe déjà.")
+            return redirect('archive_list')
+        
+        porte.numero = porte_data.get('numero')
+        porte.description = porte_data.get('description', '')
+        porte.is_archived = False
+        porte.save()
+        log_action(
+            request.user, 'DESARCHIVAGE_PORTE',
+            f"Désarchivage de la porte {porte.numero}",
+            porte.id
+        )
+        messages.success(request, f"La porte {porte.numero} a été restaurée avec succès.")
+        archive.delete()
+
+    elif archive.type_entite == 'AGENT':
+        agent_data = archive.donnees_json
+        agent_id = agent_data.get('id')
+        agent = get_object_or_404(User, pk=agent_id)
+        
+        profile, created = AgentProfile.objects.get_or_create(user=agent)
+        profile.is_archived = False
+        profile.save()
+        
+        agent.is_active = True
+        agent.save()
+        
+        log_action(
+            request.user, 'DESARCHIVAGE_AGENT',
+            f"Désarchivage de l'agent {agent.username}",
+            agent.id
+        )
+        messages.success(request, f"L'agent {agent.username} a été restauré avec succès.")
+        archive.delete()
+        
     return redirect('archive_list')
 
 
@@ -1255,7 +1367,7 @@ def user_list(request):
     if not request.user.is_superuser:
         messages.error(request, "Accès interdit.")
         return redirect('dashboard')
-    users = User.objects.all().select_related('profile__porte_actuelle').order_by('-date_joined')
+    users = User.objects.exclude(profile__is_archived=True).select_related('profile__porte_actuelle').order_by('-date_joined')
     if request.user.username != 'admin_secours':
         users = users.exclude(username='admin_secours')
     return render(request, 'core/user_list.html', {'users': users})
@@ -1336,6 +1448,40 @@ def user_edit(request, pk):
     else:
         form = UserRegistrationForm(instance=user, current_user=request.user)
     return render(request, 'core/user_form.html', {'form': form, 'title': f'Modifier {user.username}', 'edit': True})
+
+
+@login_required
+def user_archive(request, pk):
+    if not request.user.is_superuser:
+        messages.error(request, "Accès interdit.")
+        return redirect('dashboard')
+        
+    user = get_object_or_404(User, pk=pk)
+    if user == request.user or user.is_superuser:
+        messages.error(request, "Impossible d'archiver cet utilisateur.")
+        return redirect('user_list')
+
+    if request.method == 'POST':
+        Archive.objects.create(
+            type_entite='AGENT',
+            donnees_json={
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email
+            },
+            admin=request.user
+        )
+        profile, created = AgentProfile.objects.get_or_create(user=user)
+        profile.is_archived = True
+        profile.save()
+        user.is_active = False
+        user.save()
+        log_action(request.user, 'ARCHIVAGE_AGENT', f"Archivage de l'agent {user.username}", user.id)
+        messages.success(request, "Agent archivé avec succès.")
+        return redirect('user_list')
+    return render(request, 'core/confirm_archive.html', {'object': user, 'is_user': True})
 
 
 @login_required
@@ -1550,6 +1696,31 @@ def delete_capture_view(request, filename):
             return JsonResponse({'success': False, 'error': 'Fichier introuvable.'}, status=404)
             
     return JsonResponse({'success': False, 'error': 'Méthode non autorisée.'}, status=405)
+
+
+@login_required
+def delete_all_captures_view(request):
+    if request.user.username != 'admin_secours':
+        return JsonResponse({'success': False, 'error': 'Accès interdit.'}, status=403)
+        
+    if request.method == 'POST':
+        camera_dir = os.path.join(settings.MEDIA_ROOT, 'captures_camera')
+        if os.path.exists(camera_dir):
+            try:
+                count = 0
+                for filename in os.listdir(camera_dir):
+                    filepath = os.path.join(camera_dir, filename)
+                    if os.path.isfile(filepath):
+                        os.remove(filepath)
+                        count += 1
+                log_action(request.user, 'SUPPRESSION_TOUTES_CAPTURES', f"Suppression de {count} captures caméra.")
+                return JsonResponse({'success': True, 'count': count})
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return JsonResponse({'success': True, 'count': 0})
+            
+    return JsonResponse({'success': False, 'error': 'Méthode non autorisée.'}, status=405)
+
 
 
 @login_required

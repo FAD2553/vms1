@@ -14,6 +14,7 @@ class Porte(models.Model):
     numero = models.CharField(max_length=20, unique=True, verbose_name="Numéro de porte")
     description = models.TextField(blank=True, null=True, verbose_name="Description / Localisation")
     date_creation = models.DateTimeField(auto_now_add=True)
+    is_archived = models.BooleanField(default=False, verbose_name="Est archivé")
 
     class Meta:
         verbose_name = "Porte"
@@ -45,6 +46,7 @@ class AgentProfile(models.Model):
     )
     two_factor_enabled = models.BooleanField(default=False, verbose_name="2FA activé")
     two_factor_secret = models.CharField(max_length=32, blank=True, null=True, verbose_name="Secret 2FA")
+    is_archived = models.BooleanField(default=False, verbose_name="Est archivé")
 
     class Meta:
         verbose_name = "Profil Agent"

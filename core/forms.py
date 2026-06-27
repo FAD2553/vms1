@@ -51,6 +51,7 @@ class VisiteurEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['scan_cni_recto'].required = False
         self.fields['scan_cni_verso'].required = False
+        self.fields['numero_cni'].disabled = True
 
 
 class ServiceForm(forms.ModelForm):
@@ -109,7 +110,7 @@ class VisiteForm(forms.ModelForm):
         else:
             self.fields['porte_entree'].required = True
             self.fields['porte_entree'].label = "Porte d'entrée"
-            self.fields['porte_entree'].queryset = Porte.objects.all().order_by('numero')
+            self.fields['porte_entree'].queryset = Porte.objects.filter(is_archived=False).order_by('numero')
 
 
 class RapportVisiteForm(forms.Form):
@@ -122,25 +123,25 @@ class RapportVisiteForm(forms.Form):
         label="Date de fin"
     )
     service = forms.ModelChoiceField(
-        queryset=Service.objects.all(),
+        queryset=Service.objects.filter(is_archived=False),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select select2'}),
         label="Filtrer par service"
     )
     porte = forms.ModelChoiceField(
-        queryset=Porte.objects.all(),
+        queryset=Porte.objects.filter(is_archived=False),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select select2'}),
         label="Filtrer par porte"
     )
     visiteur = forms.ModelChoiceField(
-        queryset=Visiteur.objects.all(),
+        queryset=Visiteur.objects.filter(is_archived=False),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select select2'}),
         label="Filtrer par visiteur"
     )
     agent = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_superuser=False),
+        queryset=User.objects.exclude(profile__is_archived=True).filter(is_superuser=False),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select select2'}),
         label="Filtrer par agent"
@@ -155,7 +156,7 @@ class RapportVisiteForm(forms.Form):
 
 class UserRegistrationForm(forms.ModelForm):
     porte_actuelle = forms.ModelChoiceField(
-        queryset=Porte.objects.all(),
+        queryset=Porte.objects.filter(is_archived=False),
         required=True,
         widget=forms.Select(attrs={'class': 'form-select select2'}),
         label="Affectation Porte"

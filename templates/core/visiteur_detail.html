@@ -65,9 +65,14 @@
                 <h6 class="mb-0 fw-bold text-uppercase small text-muted"><i class="bi bi-person-badge me-2 text-primary"></i> Identité & Contact</h6>
                 <div class="d-flex gap-2">
                     {% if user.is_superuser %}
+                    <a href="{% url 'pdf_fiche_visiteur' visiteur.pk %}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-xs" title="Télécharger la fiche">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Fiche
+                    </a>
+                    {% if not visiteur.est_present %}
                     <a href="{% url 'visiteur_edit' visiteur.pk %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-xs">
                         <i class="bi bi-pencil me-1"></i> Modifier
                     </a>
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>

@@ -30,7 +30,7 @@
                 </div>
                 {% endif %}
 
-                <form method="post" class="login-form">
+                <form method="post" class="login-form" id="login2faForm">
                     {% csrf_token %}
                     
                     <!-- Saisie du code OTP à 6 chiffres -->
@@ -43,7 +43,7 @@
 
                     <!-- Bouton de validation -->
                     <div class="mt-4 mb-4">
-                        <button type="submit" class="btn btn-login w-100 shadow-sm">
+                        <button type="submit" id="login2faSubmitBtn" class="btn btn-login w-100 shadow-sm">
                             Valider et se connecter
                         </button>
                     </div>
@@ -55,6 +55,15 @@
                         </a>
                     </div>
                 </form>
+
+                <script>
+                    document.getElementById('login2faForm').addEventListener('submit', function() {
+                        const btn = document.getElementById('login2faSubmitBtn');
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Validation...';
+                        btn.classList.add('opacity-75');
+                        btn.style.pointerEvents = 'none';
+                    });
+                </script>
 
                 <div class="text-center mt-5">
                     <img src="{% static 'img/logo.png' %}" alt="UWAZY Logo" class="brand-footer-logo">

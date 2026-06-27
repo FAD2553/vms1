@@ -28,8 +28,10 @@
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                        <li><a class="dropdown-item" href="{% url 'porte_edit' porte.pk %}"><i class="bi bi-pencil me-2"></i> Modifier</a></li>
-                        <li><a class="dropdown-item" href="{% url 'porte_detail' porte.pk %}"><i class="bi bi-bar-chart-fill me-2"></i> Statistiques</a></li>
+                        <li><a class="dropdown-item" href="{% url 'porte_edit' porte.pk %}"><i class="bi bi-pencil me-2 text-primary"></i> Modifier</a></li>
+                        <li><a class="dropdown-item" href="{% url 'porte_detail' porte.pk %}"><i class="bi bi-bar-chart-fill me-2 text-info"></i> Statistiques</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger fw-bold" href="{% url 'porte_archive' porte.pk %}"><i class="bi bi-archive-fill me-2"></i> Archiver</a></li>
                     </ul>
                 </div>
             </div>

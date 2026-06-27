@@ -253,7 +253,12 @@
     <!-- Formulaire de filtres et d'organisation -->
     <div class="card filter-card mb-4">
         <div class="card-body p-4">
-            <h5 class="fw-bold mb-3"><i class="bi bi-funnel-fill text-primary me-2"></i>Filtrer et trier les captures</h5>
+            <h5 class="fw-bold mb-3 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-funnel-fill text-primary me-2"></i>Filtrer et trier les captures</span>
+                <button type="button" class="btn btn-sm btn-outline-danger shadow-sm fw-bold" onclick="confirmDeleteAll()">
+                    <i class="bi bi-trash-fill me-1"></i> Supprimer tout
+                </button>
+            </h5>
             <form method="GET" action="" id="filterForm">
                 <div class="row g-3">
                     <!-- Recherche par nom -->
@@ -460,6 +465,24 @@
         </div>
     </div>
 </div>
+<!-- Modal Confirmation Suppression Tout -->
+<div class="modal fade" id="deleteAllConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-body p-4 text-center">
+                <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                    <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+                </div>
+                <h5 class="fw-bold mb-2 text-danger">Supprimer TOUT ?</h5>
+                <p class="text-muted small mb-4">Cette action est définitive et supprimera physiquement <strong>toutes</strong> les images de la galerie.</p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-danger py-2 fw-bold rounded-3" id="confirmDeleteAllBtn">Oui, tout supprimer</button>
+                    <button type="button" class="btn btn-light py-2 fw-bold rounded-3 border" data-bs-dismiss="modal">Annuler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -467,6 +490,46 @@
     // Lightbox modal handling
     const lightboxModal = new bootstrap.Modal(document.getElementById('lightboxModal'));
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    const deleteAllModal = new bootstrap.Modal(document.getElementById('deleteAllConfirmModal'));
+
+    function confirmDeleteAll() {
+        deleteAllModal.show();
+    }
+
+    document.getElementById('confirmDeleteAllBtn').addEventListener('click', function() {
+        const csrfToken = document.querySelector('#csrf-token-container [name=csrfmiddlewaretoken]').value;
+        const deleteUrl = "{% url 'delete_all_captures' %}";
+
+        document.getElementById('confirmDeleteAllBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Suppression...';
+        document.getElementById('confirmDeleteAllBtn').disabled = true;
+
+        fetch(deleteUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('confirmDeleteAllBtn').innerHTML = 'Oui, tout supprimer';
+            document.getElementById('confirmDeleteAllBtn').disabled = false;
+            deleteAllModal.hide();
+            if (data.success) {
+                showToast(data.count + " capture(s) supprimée(s) avec succès.");
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                alert("Erreur de suppression: " + (data.error || "Inconnue"));
+            }
+        })
+        .catch(err => {
+            console.error("AJAX Error:", err);
+            document.getElementById('confirmDeleteAllBtn').innerHTML = 'Oui, tout supprimer';
+            document.getElementById('confirmDeleteAllBtn').disabled = false;
+            deleteAllModal.hide();
+            alert("Une erreur est survenue lors de la communication avec le serveur.");
+        });
+    });
 
     function openLightbox(url, filename, type, date, time, size) {
         document.getElementById('lightboxTitle').textContent = filename;

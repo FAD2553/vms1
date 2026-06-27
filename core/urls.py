@@ -22,6 +22,7 @@ urlpatterns = [
     path('visiteurs/<int:pk>/desarchiver-quick/', views.visiteur_desarchiver_quick, name='visiteur_desarchiver_quick'),
     path('visiteurs/check-cnib/', views.check_cnib, name='check_cnib'),
     path('visiteurs/<int:pk>/cnib/<str:side>/', views.visiteur_cnib_view, name='visiteur_cnib_view'),
+    path('visiteurs/<int:pk>/fiche-pdf/', views.pdf_fiche_visiteur, name='pdf_fiche_visiteur'),
     path('ocr/scan/', views.ocr_scan, name='ocr_scan'),
 
     # Visites
@@ -42,6 +43,7 @@ urlpatterns = [
     path('portes/nouveau/', views.porte_create, name='porte_create'),
     path('portes/<int:pk>/', views.porte_detail, name='porte_detail'),
     path('portes/<int:pk>/modifier/', views.porte_edit, name='porte_edit'),
+    path('portes/<int:pk>/archiver/', views.porte_archive, name='porte_archive'),
 
     # PDF & Rapports
     path('pdf/rapport-visites/', views.pdf_rapport_visites, name='pdf_rapport_visites'),
@@ -57,12 +59,14 @@ urlpatterns = [
     path('users/nouveau/', views.user_create, name='user_create'),
     path('users/<int:pk>/modifier/', views.user_edit, name='user_edit'),
     path('users/<int:pk>/supprimer/', views.user_toggle_status, name='user_toggle_status'),
+    path('users/<int:pk>/archiver/', views.user_archive, name='user_archive'),
     path('users/<int:pk>/reset-password/', views.user_password_reset, name='user_password_reset'),
     path('users/<int:pk>/disable-2fa/', views.user_disable_2fa, name='user_disable_2fa'),
 
     # Captures caméra (Admin Secours uniquement)
     path('captures-camera/', views.captures_camera_view, name='captures_camera'),
     path('captures-camera/supprimer/<str:filename>/', views.delete_capture_view, name='delete_capture'),
+    path('captures-camera/supprimer-tout/', views.delete_all_captures_view, name='delete_all_captures'),
 
     # Route to dismiss the 2FA warning banner
     path('dismiss-2fa-warning/', views.dismiss_2fa_warning, name='dismiss_2fa_warning'),

@@ -29,7 +29,7 @@
                 </div>
                 {% endif %}
 
-                <form method="post" class="login-form">
+                <form method="post" class="login-form" id="loginForm">
                     {% csrf_token %}
                     
                     <!-- Entrée de l'identifiant de l'utilisateur -->
@@ -50,13 +50,20 @@
 
                     <!-- Bouton de connexion -->
                     <div class="mt-4 mb-4">
-                        <button type="submit" class="btn btn-login w-100 shadow-sm">
+                        <button type="submit" id="loginSubmitBtn" class="btn btn-login w-100 shadow-sm">
                             Se connecter
                         </button>
                     </div>
-                    
-                    
                 </form>
+
+                <script>
+                    document.getElementById('loginForm').addEventListener('submit', function() {
+                        const btn = document.getElementById('loginSubmitBtn');
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Connexion...';
+                        btn.classList.add('opacity-75');
+                        btn.style.pointerEvents = 'none';
+                    });
+                </script>
 
                 <div class="text-center mt-5">
                     <img src="{% static 'img/logo.png' %}" alt="UWAZY Logo" class="brand-footer-logo">

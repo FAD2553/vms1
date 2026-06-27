@@ -1,0 +1,88 @@
+{% extends "core/pdf/base_pdf.html" %}
+
+{% block pdf_content %}
+<div class="section">
+    <h2>Fiche détaillée du visiteur</h2>
+    
+    <table class="info-table" style="margin-bottom: 20px;">
+        <tr>
+            <td class="label">Nom complet :</td>
+            <td><strong>{{ visiteur.prenom }} {{ visiteur.nom }}</strong></td>
+            <td class="label">N° CNIB :</td>
+            <td>{{ visiteur.numero_cni }}</td>
+        </tr>
+        <tr>
+            <td class="label">Date de naissance :</td>
+            <td>{{ visiteur.date_naissance|date:"d/m/Y" }}</td>
+            <td class="label">Sexe :</td>
+            <td>{{ visiteur.get_sexe_display|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Téléphone :</td>
+            <td>{{ visiteur.telephone|default:"Non renseigné" }}</td>
+            <td class="label">Profession :</td>
+            <td>{{ visiteur.profession|default:"Non renseignée" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Date d'enregistrement :</td>
+            <td colspan="3">{{ visiteur.date_enregistrement|date:"d/m/Y H:i" }}</td>
+        </tr>
+    </table>
+    
+    {% if visiteur.adresse %}
+    <table class="info-table" style="margin-bottom: 20px;">
+        <tr>
+            <td class="label">Adresse :</td>
+            <td>{{ visiteur.adresse }}</td>
+        </tr>
+    </table>
+    {% endif %}
+</div>
+
+{% if cnib_recto_base64 %}
+<div class="section" style="margin-top: 20px; page-break-inside: avoid;">
+    <h2>Document d'identité (Recto)</h2>
+    <div style="text-align: center; margin-top: 10px;">
+        <img src="data:{{ cnib_recto_type }};base64,{{ cnib_recto_base64 }}" style="max-height: 250px; border: 1px solid #ccc;" alt="CNIB Recto">
+    </div>
+</div>
+{% endif %}
+
+<div class="section" style="margin-top: 30px;">
+    <h2>Historique des visites ({{ visites.count }})</h2>
+    {% if visites %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Service visité</th>
+                <th>Porte d'entrée</th>
+                <th>Heure d'entrée</th>
+                <th>Heure de sortie</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for visite in visites %}
+            <tr>
+                <td>{{ visite.date_visite|date:"d/m/Y" }}</td>
+                <td>{{ visite.service_visite.nom }}</td>
+                <td>{{ visite.porte_entree.numero|default:"---" }}</td>
+                <td>{{ visite.heure_entree|date:"H:i" }}</td>
+                <td>{{ visite.heure_sortie|date:"H:i"|default:"---" }}</td>
+                <td>
+                    {% if visite.heure_sortie %}
+                        <span style="color: #6c757d;">Terminé</span>
+                    {% else %}
+                        <span style="color: #28a745; font-weight: bold;">Sur place</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="font-style: italic; color: #666;">Aucune visite enregistrée pour ce visiteur.</p>
+    {% endif %}
+</div>
+{% endblock %}

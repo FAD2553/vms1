@@ -112,6 +112,11 @@
                                         </button>
                                     </form>
                                 </li>
+                                <li>
+                                    <a class="dropdown-item py-2 text-danger fw-bold" href="{% url 'user_archive' u.pk %}">
+                                        <i class="bi bi-archive-fill me-2"></i> Archiver
+                                    </a>
+                                </li>
                                 {% endif %}
                             </ul>
                         </div>

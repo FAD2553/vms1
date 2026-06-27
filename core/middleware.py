@@ -13,7 +13,10 @@ class SessionTimeoutMiddleware:
         if user.is_authenticated:
             # L'utilisateur est connecté, on définit un cookie signé pour mémoriser son nom d'utilisateur
             response = self.get_response(request)
-            response.set_signed_cookie('last_active_user', user.username, max_age=86400)  # 1 jour
+            if is_explicit_logout:
+                response.delete_cookie('last_active_user')
+            else:
+                response.set_signed_cookie('last_active_user', user.username, max_age=86400)  # 1 jour
             return response
         else:
             # L'utilisateur est anonyme, vérifions s'il a le cookie signed de sa dernière session active
@@ -29,7 +32,7 @@ class SessionTimeoutMiddleware:
                     log_action(
                         old_user,
                         'DECONNEXION_AUTO',
-                        f"Déconnexion automatique de l'utilisateur {old_user.username} après 30 minutes d'inactivité.",
+                        f"Déconnexion automatique de l'utilisateur {old_user.username}.",
                         None
                     )
                 except User.DoesNotExist:
