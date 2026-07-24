@@ -1,0 +1,90 @@
+{% extends "core/pdf/base_pdf.html" %}
+
+{% block pdf_content %}
+<div class="section">
+    <h2>Rapport de Visite #{{ visite.id }}</h2>
+    
+    <table class="info-table" style="margin-bottom: 20px;">
+        <tr>
+            <td class="label">Nom du visiteur :</td>
+            <td><strong>{{ visite.visiteur.prenom }} {{ visite.visiteur.nom }}</strong></td>
+            <td class="label">N° CNIB :</td>
+            <td>{{ visite.visiteur.numero_cni }}</td>
+        </tr>
+        <tr>
+            <td class="label">Service visité :</td>
+            <td><strong>{{ visite.service_visite.nom }}</strong></td>
+            <td class="label">Statut :</td>
+            <td>
+                {% if visite.statut == 'PRESENT' %}
+                    <span style="color: #28a745; font-weight: bold;">Sur place</span>
+                {% else %}
+                    <span style="color: #6c757d; font-weight: bold;">Terminée</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+    
+    <div style="margin-top: 20px; margin-bottom: 20px;">
+        <h3 style="margin-bottom: 5px; color: #333; font-size: 14px; text-transform: uppercase;">Chronologie</h3>
+        <table class="info-table">
+            <tr>
+                <td class="label">Date :</td>
+                <td>{{ visite.date_visite|date:"d/m/Y" }}</td>
+                <td class="label">Durée :</td>
+                <td>{{ visite.duree_visite }}</td>
+            </tr>
+            <tr>
+                <td class="label">Heure d'entrée :</td>
+                <td>{{ visite.heure_entree|date:"H:i" }}</td>
+                <td class="label">Porte d'entrée :</td>
+                <td>{{ visite.porte_entree.numero|default:"---" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Agent d'entrée :</td>
+                <td>{{ visite.agent_entree.username|default:"---" }}</td>
+                <td class="label"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="label">Heure de sortie :</td>
+                <td>{{ visite.heure_sortie|date:"H:i"|default:"En attente" }}</td>
+                <td class="label">Porte de sortie :</td>
+                <td>{% if visite.porte_sortie %}{{ visite.porte_sortie.numero }}{% else %}---{% endif %}</td>
+            </tr>
+            <tr>
+                <td class="label">Agent de sortie :</td>
+                <td>{% if visite.agent_sortie %}{{ visite.agent_sortie.username }}{% else %}---{% endif %}</td>
+                <td class="label"></td>
+                <td></td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="margin-top: 20px; margin-bottom: 20px;">
+        <h3 style="margin-bottom: 5px; color: #333; font-size: 14px; text-transform: uppercase;">Motif de la Visite</h3>
+        <div style="padding: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6;">
+            {{ visite.motif|default:"Aucun motif spécifié." }}
+        </div>
+    </div>
+
+    {% if visite.observations %}
+    <div style="margin-top: 20px; margin-bottom: 20px;">
+        <h3 style="margin-bottom: 5px; color: #333; font-size: 14px; text-transform: uppercase;">Notes & Observations (Entrée)</h3>
+        <div style="padding: 10px; border: 1px solid #dee2e6; font-style: italic;">
+            {{ visite.observations }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if visite.notes_sortie %}
+    <div style="margin-top: 20px; margin-bottom: 20px;">
+        <h3 style="margin-bottom: 5px; color: #333; font-size: 14px; text-transform: uppercase;">Notes de Sortie</h3>
+        <div style="padding: 10px; border: 1px solid #dee2e6; font-style: italic;">
+            {{ visite.notes_sortie }}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

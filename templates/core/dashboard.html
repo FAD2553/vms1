@@ -182,18 +182,7 @@
 
 <!-- Raccourcis et outils rapides -->
 <div class="row g-3 mb-4 justify-content-center">
-    <div class="{% if user.username == 'admin_secours' %}col-md-4 col-xl-5-cols{% elif user.is_superuser %}col-md-3{% else %}col-md-4{% endif %}">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body p-3">
-                <a href="{% url 'visite_create' %}"
-                    class="btn btn-primary w-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center"
-                    style="border-radius: 12px; height: 100px;">
-                    <i class="bi bi-plus-lg fs-2"></i>
-                    <span class="fw-bold mt-2 text-uppercase">Nouvelle Entrée</span>
-                </a>
-            </div>
-        </div>
-    </div>
+    
     <div class="{% if user.username == 'admin_secours' %}col-md-4 col-xl-5-cols{% elif user.is_superuser %}col-md-3{% else %}col-md-4{% endif %}">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-3">
@@ -206,6 +195,20 @@
             </div>
         </div>
     </div>
+
+    <div class="{% if user.username == 'admin_secours' %}col-md-4 col-xl-5-cols{% elif user.is_superuser %}col-md-3{% else %}col-md-4{% endif %}">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <a href="{% url 'visite_create' %}"
+                    class="btn btn-primary w-100 py-3 shadow-sm d-flex flex-column align-items-center justify-content-center"
+                    style="border-radius: 12px; height: 100px;">
+                    <i class="bi bi-plus-lg fs-2"></i>
+                    <span class="fw-bold mt-2 text-uppercase">Nouvelle Entrée</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <div class="{% if user.username == 'admin_secours' %}col-md-4 col-xl-5-cols{% elif user.is_superuser %}col-md-3{% else %}col-md-4{% endif %}">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-3">
@@ -780,78 +783,6 @@
                 }
             }
         });
-    }
-
-    // Polling Loop (every 4 seconds)
-    function pollDashboardUpdates() {
-        fetch('/?format=json')
-            .then(response => response.json())
-            .then(data => {
-                // 1. Update stats indicators with counting micro-animations
-                animateCount('stat-total-portes', data.total_portes);
-                animateCount('stat-porte-affectee', parseInt(data.porte_actuelle) || 0);
-                animateCount('stat-visiteurs-presents', data.visiteurs_presents);
-                animateCount('stat-visites-aujourdhui', data.visites_aujourdhui);
-                animateCount('stat-total-visiteurs', data.total_visiteurs);
-                animateCount('stat-total-agents', data.total_agents);
-                animateCount('stat-active-agents', data.active_agents);
-                animateCount('stat-total-services', data.total_services);
-                animateCount('stat-agents-en-ligne', data.agents_en_ligne);
-                
-                const badgePresents = document.getElementById('badge-presents');
-                if (badgePresents) badgePresents.textContent = data.visiteurs_presents;
-
-                // 2. Update list tables with DOM diffing
-                updatePresentsTable(data.visites_sur_place);
-                updateRecentsTable(data.recent_visites, {% if user.is_superuser %}true{% else %}false{% endif %});
-
-                // 3. Update Chart.js datasets dynamically
-                visitData.daily.labels = data.daily_labels;
-                visitData.daily.data = data.daily_data;
-                visitData.weekly.labels = data.weekly_labels;
-                visitData.weekly.data = data.weekly_data;
-                visitData.monthly.labels = data.monthly_labels;
-                visitData.monthly.data = data.monthly_data;
-                visitData.yearly.labels = data.yearly_labels;
-                visitData.yearly.data = data.yearly_data;
-
-                const activeTab = document.querySelector('#visitTabs .nav-link.active');
-                const activePeriod = activeTab ? activeTab.dataset.period : 'monthly';
-                updateVisitChart(activePeriod);
-
-                if (serviceTrafficChart) {
-                    serviceTrafficChart.data.labels = data.service_labels;
-                    serviceTrafficChart.data.datasets[0].data = data.service_data;
-                    serviceTrafficChart.update();
-                }
-                updateServiceLegend(data.service_labels, data.service_percents);
-            })
-            .catch(err => console.error("Error polling dashboard updates:", err));
-    }
-
-    // Visibility-aware polling for dashboard updates
-    let dashboardPollingId = null;
-    function startDashboardPolling() {
-        if (!dashboardPollingId) {
-            dashboardPollingId = setInterval(pollDashboardUpdates, 8000);
-        }
-    }
-    function stopDashboardPolling() {
-        if (dashboardPollingId) {
-            clearInterval(dashboardPollingId);
-            dashboardPollingId = null;
-        }
-    }
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            stopDashboardPolling();
-        } else {
-            startDashboardPolling();
-        }
-    });
-    // Start polling if page is initially visible
-    if (!document.hidden) {
-        startDashboardPolling();
     }
 
     updateVisitChart('monthly');

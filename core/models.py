@@ -164,6 +164,7 @@ class Visite(models.Model):
         max_length=15, choices=STATUT_VISITE_CHOICES, default='PRESENT', verbose_name="Statut"
     )
     observations = models.TextField(blank=True, null=True, verbose_name="Observations")
+    notes_sortie = models.TextField(blank=True, null=True, verbose_name="Notes de sortie")
 
     class Meta:
         ordering = ['-heure_entree']

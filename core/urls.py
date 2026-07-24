@@ -30,6 +30,7 @@ urlpatterns = [
     path('visites/nouvelle/', views.visite_create, name='visite_create'),
     path('visites/<int:pk>/', views.visite_detail, name='visite_detail'),
     path('visites/<int:pk>/sortie/', views.visite_sortie, name='visite_sortie'),
+    path('visites/<int:pk>/fiche-pdf/', views.pdf_fiche_visite, name='pdf_fiche_visite'),
 
     # Services
     path('services/', views.service_list, name='service_list'),

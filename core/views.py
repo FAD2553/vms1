@@ -897,10 +897,16 @@ def visite_sortie(request, pk):
                 messages.error(request, "Veuillez sélectionner une porte de sortie.")
                 return render(request, 'core/visite_sortie.html', {
                     'visite': visite,
-                    'porte_actuelle': None
+                    'porte_actuelle': None,
+                    'all_portes': Porte.objects.filter(is_archived=False)
                 })
         else:
             visite.porte_sortie = request.user.profile.porte_actuelle
+        
+        # Sauvegarder les notes de sortie
+        notes = request.POST.get('notes_sortie', '').strip()
+        if notes:
+            visite.notes_sortie = notes
             
         visite.save()
         p_sort = visite.porte_sortie.numero if visite.porte_sortie else "admin"
@@ -914,9 +920,12 @@ def visite_sortie(request, pk):
         except AgentProfile.DoesNotExist:
             pass
 
+    all_portes = Porte.objects.filter(is_archived=False) if request.user.is_superuser else None
+
     return render(request, 'core/visite_sortie.html', {
         'visite': visite,
-        'porte_actuelle': porte_actuelle
+        'porte_actuelle': porte_actuelle,
+        'all_portes': all_portes
     })
 
 
@@ -1261,6 +1270,28 @@ def pdf_fiche_visiteur(request, pk):
     
     log_action(request.user, 'TELECHARGEMENT_FICHE_PDF', f"Téléchargement de la fiche PDF du visiteur {visiteur}", visiteur.id)
     return _render_to_pdf(request, 'core/pdf/fiche_visiteur.html', context, f'fiche_visiteur_{visiteur.numero_cni}.pdf')
+
+
+@login_required
+def pdf_fiche_visite(request, pk):
+    visite = get_object_or_404(Visite.objects.select_related('visiteur', 'service_visite', 'agent_entree', 'agent_sortie', 'porte_entree', 'porte_sortie'), pk=pk)
+    
+    if not request.user.is_superuser:
+        try:
+            if not request.user.profile.porte_actuelle:
+                if visite.statut != 'PRESENT':
+                    messages.error(request, "Accès restreint aux visites en cours.")
+                    return redirect('visite_list')
+        except AgentProfile.DoesNotExist:
+            if visite.statut != 'PRESENT':
+                return redirect('visite_list')
+    
+    context = {
+        'visite': visite,
+    }
+    
+    log_action(request.user, 'TELECHARGEMENT_FICHE_PDF', f"Téléchargement du rapport PDF de la visite #{visite.id}", visite.id)
+    return _render_to_pdf(request, 'core/pdf/fiche_visite.html', context, f'rapport_visite_{visite.id}.pdf')
 
 
 @login_required

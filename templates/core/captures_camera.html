@@ -799,42 +799,5 @@
         });
     }
 
-    function pollCapturesUpdates() {
-        const url = new URL(window.location.href);
-        url.searchParams.set('format', 'json');
-        
-        fetch(url.pathname + url.search)
-            .then(res => res.json())
-            .then(data => {
-                updateCapturesGrid(data.files);
-                updatePagination(data.pagination);
-            })
-            .catch(err => console.error("Error polling captures camera updates:", err));
-    }
-
-    // Visibility-aware polling for captures camera updates
-    let capturesPollingId = null;
-    function startCapturesPolling() {
-        if (!capturesPollingId) {
-            capturesPollingId = setInterval(pollCapturesUpdates, 8000);
-        }
-    }
-    function stopCapturesPolling() {
-        if (capturesPollingId) {
-            clearInterval(capturesPollingId);
-            capturesPollingId = null;
-        }
-    }
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            stopCapturesPolling();
-        } else {
-            startCapturesPolling();
-        }
-    });
-    // Start polling if page is initially visible
-    if (!document.hidden) {
-        startCapturesPolling();
-    }
 </script>
 {% endblock %}

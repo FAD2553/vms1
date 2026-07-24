@@ -120,9 +120,18 @@
 
                         {% if visite.observations %}
                         <div class="col-12">
-                            <label class="text-muted small text-uppercase fw-extrabold mb-2 d-block opacity-75">Notes & Observations de l'Agent</label>
+                            <label class="text-muted small text-uppercase fw-extrabold mb-2 d-block opacity-75">Notes & Observations de l'Agent (Entrée)</label>
                             <div class="p-3 border rounded-3 bg-light-subtle italic text-muted-custom small">
                                 {{ visite.observations }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if visite.statut == 'SORTI' and visite.notes_sortie %}
+                        <div class="col-12">
+                            <label class="text-muted small text-uppercase fw-extrabold mb-2 d-block opacity-75">Notes de Sortie</label>
+                            <div class="p-3 border rounded-3 bg-light-subtle italic text-muted-custom small">
+                                {{ visite.notes_sortie }}
                             </div>
                         </div>
                         {% endif %}
@@ -137,9 +146,9 @@
                     <i class="bi bi-door-closed-fill me-2"></i> ENREGISTRER LA SORTIE
                 </a>
                 {% endif %}
-                <button onclick="window.print()" class="btn btn-outline-dark px-4 py-3 rounded-3 fw-bold border-2">
+                <a href="{% url 'pdf_fiche_visite' visite.pk %}" target="_blank" class="btn btn-outline-dark px-4 py-3 rounded-3 fw-bold border-2">
                     <i class="bi bi-printer-fill me-2"></i> IMPRIMER LA FICHE
-                </button>
+                </a>
                 <a href="{% url 'visite_list' %}" class="btn btn-light px-4 py-3 rounded-3 border fw-bold text-muted-custom ms-md-auto">
                     RETOUR AU JOURNAL
                 </a>

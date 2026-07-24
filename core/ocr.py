@@ -12,13 +12,19 @@ except ImportError:
     OCR_AVAILABLE = False
 
 
+_LANG_CACHE = None
+
 def _get_ocr_lang():
-    """Retourne 'fra' si disponible, sinon 'eng'."""
+    """Retourne 'fra' si disponible, sinon 'eng' (avec mise en cache)."""
+    global _LANG_CACHE
+    if _LANG_CACHE is not None:
+        return _LANG_CACHE
     try:
         langs = pytesseract.get_languages()
-        return 'fra' if 'fra' in langs else 'eng'
+        _LANG_CACHE = 'fra' if 'fra' in langs else 'eng'
     except Exception:
-        return 'eng'
+        _LANG_CACHE = 'eng'
+    return _LANG_CACHE
 
 
 def extract_cnib_info(image_path):
@@ -73,8 +79,8 @@ def extract_cnib_info(image_path):
         # Prétraitement : Convertir en niveaux de gris, redimensionner 2x, seuillage léger
         img_processed = img_original.convert('L')
         width, height = img_processed.size
-        # Redimensionner 2x (LANCZOS)
-        img_processed = img_processed.resize((width * 2, height * 2), Image.Resampling.LANCZOS)
+        # Redimensionner 2x (BILINEAR est beaucoup plus rapide que LANCZOS et suffisant après binarisation)
+        img_processed = img_processed.resize((width * 2, height * 2), Image.Resampling.BILINEAR)
         # Seuil 120
         img_processed = img_processed.point(lambda p: 255 if p > 120 else 0)
 
